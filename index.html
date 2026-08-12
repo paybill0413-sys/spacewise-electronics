@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPACEWISE ELECTRONICS - Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-background" id="loginBg">
+            <div class="floating-shapes">
+                <span class="shape shape-1">📱</span>
+                <span class="shape shape-2">💻</span>
+                <span class="shape shape-3">🖥️</span>
+                <span class="shape shape-4">📺</span>
+                <span class="shape shape-5">🎧</span>
+                <span class="shape shape-6">⌚</span>
+            </div>
+        </div>
+        <div class="login-box">
+            <div class="login-header">
+                <div class="logo-container">
+                    <img src="images/logo.png" alt="SPACEWISE ELECTRONICS" class="logo-large"
+                         onerror="this.style.display='none'; this.parentElement.querySelector('.logo-fallback').style.display='block';">
+                    <span class="logo-fallback" style="display:none; font-size:45px;">🚀</span>
+                </div>
+                <h1>SPACEWISE <span>ELECTRONICS</span></h1>
+                <p>Inventory & Sales Management System</p>
+            </div>
+
+            <div class="features-preview">
+                <div class="feature-item"><i class="fas fa-boxes"></i><p>Goods In</p></div>
+                <div class="feature-item"><i class="fas fa-warehouse"></i><p>In-House</p></div>
+                <div class="feature-item"><i class="fas fa-truck"></i><p>Goods Out</p></div>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email Address</label>
+                    <input type="email" id="email" placeholder="staff@spacewise.com" required>
+                </div>
+                <button type="submit" class="btn-primary" id="loginBtn">
+                    <i class="fas fa-rocket"></i> Launch System
+                </button>
+            </form>
+
+            <div id="loginMessage" class="message"></div>
+
+            <div class="login-footer">
+                <p>🔒 Secure staff access</p>
+                <p class="admin-link"><a href="#" onclick="goToAdmin()"><i class="fas fa-crown"></i> Admin Login</a></p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPACEWISE - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <!-- Motivational Rolling Banner -->
+    <div class="announcement-bar">
+        <div class="marquee-track" id="marqueeTrack"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <!-- LEFT DROPDOWN MENU (with logo next to it) -->
+        <div class="nav-left">
+            <div class="left-menu-wrapper" onmouseenter="openLeftMenu()" onmouseleave="closeLeftMenu()">
+                <button class="menu-toggle" id="leftMenuToggle"><i class="fas fa-bars"></i></button>
+                <div class="left-dropdown" id="leftDropdown">
+                    <div class="dropdown-backdrop"></div>
+                    <div class="dropdown-content">
+                        <div class="dropdown-section">
+                            <div class="dropdown-title">Navigation</div>
+                            <button class="dropdown-item active" data-section="dashboard" onclick="navigateTo('dashboard')"><i class="fas fa-home"></i> Dashboard</button>
+                            <button class="dropdown-item" data-section="goods-in" onclick="navigateTo('goods-in')"><i class="fas fa-boxes"></i> Goods In <span class="badge-nav" id="navGoodsInBadge">0</span></button>
+                            <button class="dropdown-item" data-section="in-house" onclick="navigateTo('in-house')"><i class="fas fa-warehouse"></i> In-House Stock <span class="badge-nav" id="navStockBadge">0</span></button>
+                            <button class="dropdown-item" data-section="goods-out" onclick="navigateTo('goods-out')"><i class="fas fa-truck"></i> Goods Out <span class="badge-nav" id="navGoodsOutBadge">0</span></button>
+                            <button class="dropdown-item" data-section="reports" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> Reports</button>
+                            <button class="dropdown-item" data-section="delivery" onclick="navigateTo('delivery')"><i class="fas fa-phone-alt"></i> Delivery</button>
+                            <div id="dynamicNavItems"></div>
+                        </div>
+                        <div class="dropdown-footer">SPACEWISE v2.0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-brand">
+                <img src="images/logo.png" alt="SPACEWISE" class="nav-logo"
+                     onerror="this.style.display='none'; this.parentElement.querySelector('.logo-fallback-nav').style.display='inline';">
+                <span class="logo-fallback-nav" style="display:none;">🚀</span>
+                <span>SPACEWISE</span>
+            </div>
+        </div>
+
+        <div class="nav-user">
+            <!-- CART DROPDOWN (below logout) -->
+            <div class="cart-dropdown-wrapper" onmouseenter="openCartDropdown()" onmouseleave="closeCartDropdown()">
+                <button class="cart-toggle" onclick="toggleCartDropdown()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-badge" id="cartBadgeTop">0</span>
+                </button>
+                <div class="cart-dropdown" id="cartDropdown">
+                    <div class="cart-dropdown-header">🛒 Your Cart</div>
+                    <div id="cartDropdownItems"></div>
+                    <div class="cart-dropdown-footer">
+                        <strong>Total: <span id="cartDropdownTotal">KES 0</span></strong>
+                        <button class="btn-primary" onclick="openCustomerModal()" style="width:100%; margin-top:8px; padding:8px; font-size:14px;">Checkout</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="user-profile">
+                <i class="fas fa-user-circle"></i>
+                <span class="user-email" id="userEmail">staff@spacewise.com</span>
+            </div>
+            <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="mainContent">
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard">
+            <div class="welcome-banner" id="dashboardBgWrapper">
+                <div class="welcome-text">
+                    <h2>👋 Welcome, <span id="userName">Staff</span>!</h2>
+                    <p>Manage your inventory efficiently with SPACEWISE</p>
+                </div>
+                <div class="welcome-stats">
+                    <div class="mini-stat"><span class="mini-stat-icon">📦</span><div><span class="mini-stat-number" id="goodsInCount">0</span><span class="mini-stat-label">Goods In</span></div></div>
+                    <div class="mini-stat"><span class="mini-stat-icon">🏠</span><div><span class="mini-stat-number" id="stockCount">0</span><span class="mini-stat-label">In Stock</span></div></div>
+                    <div class="mini-stat"><span class="mini-stat-icon">🚚</span><div><span class="mini-stat-number" id="goodsOutCount">0</span><span class="mini-stat-label">Sold</span></div></div>
+                </div>
+            </div>
+
+            <div id="lowStockAlert" class="alert alert-danger" style="display:none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="lowStockMessage">Some items are running low!</span>
+            </div>
+
+            <div id="dashboardMessage" class="message"></div>
+            <!-- Dynamic Sections Container (for custom sections) -->
+<div id="dynamicSectionsContainer"></div>
+
+            <!-- Dashboard Grid -->
+            <div class="dashboard-grid" id="dashboardGrid">
+                <div class="grid-card" onclick="navigateTo('goods-in')"><div class="grid-icon"><i class="fas fa-boxes"></i></div><h3>Goods In</h3><p>Add new stock</p><span class="badge" id="goodsInBadge">0</span></div>
+                <div class="grid-card" onclick="navigateTo('in-house')"><div class="grid-icon"><i class="fas fa-warehouse"></i></div><h3>In-House Stock</h3><p>View inventory</p><span class="badge" id="stockBadge">0</span></div>
+                <div class="grid-card" onclick="navigateTo('goods-out')"><div class="grid-icon"><i class="fas fa-truck"></i></div><h3>Goods Out</h3><p>Sales history</p><span class="badge" id="goodsOutBadge">0</span></div>
+                <div class="grid-card" onclick="navigateTo('reports')"><div class="grid-icon"><i class="fas fa-chart-bar"></i></div><h3>Reports</h3><p>Analytics</p></div>
+                <div class="grid-card" onclick="navigateTo('delivery')"><div class="grid-icon"><i class="fas fa-phone-alt"></i></div><h3>Delivery</h3><p>Contact delivery</p></div>
+                <div id="dynamicGridCards"></div>
+            </div>
+        </div>
+
+        <!-- ====== SECTION: GOODS IN ====== -->
+        <div class="section" id="section-goods-in" style="display:none;">
+            <div class="section-header">
+                <h3><i class="fas fa-boxes"></i> Record Goods In</h3>
+                <button class="btn-close" onclick="closeSection()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="goodsInForm" onsubmit="addGoodsIn(event)">
+                <div class="form-group">
+                    <label><i class="fas fa-search"></i> Search / Select Product</label>
+                    <input type="text" id="productSearch" placeholder="Type product name..." oninput="filterProducts()">
+                    <select id="productSelect" size="6" required style="width:100%; padding:8px 12px; border:2px solid #e8eaed; border-radius:10px; font-size:14px; margin-top:6px;"></select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label><i class="fas fa-hashtag"></i> Quantity</label><input type="number" id="quantityIn" placeholder="0" min="1" required></div>
+                    <div class="form-group"><label><i class="fas fa-map-pin"></i> Location</label><input type="text" id="location" placeholder="Shelf/Rack" required></div>
+                </div>
+                <div class="form-group"><label><i class="fas fa-truck"></i> Supplier</label><input type="text" id="supplier" placeholder="Supplier name"></div>
+                <div class="form-group"><label><i class="fas fa-sticky-note"></i> Notes</label><textarea id="goodsInNotes" placeholder="Additional info..."></textarea></div>
+                <button type="submit" class="btn-primary"><i class="fas fa-plus-circle"></i> Add Goods In</button>
+            </form>
+            <h4 class="section-subtitle"><i class="fas fa-history"></i> Recent Goods In</h4>
+            <div class="transaction-list" id="goodsInList"></div>
+        </div>
+
+        <!-- ====== SECTION: IN-HOUSE STOCK ====== -->
+        <div class="section" id="section-in-house" style="display:none;">
+            <div class="section-header">
+                <h3><i class="fas fa-warehouse"></i> In-House Stock</h3>
+                <button class="btn-close" onclick="closeSection()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="search-box"><i class="fas fa-search"></i><input type="text" id="stockSearch" placeholder="Search by first name..." oninput="filterStock()"></div>
+            <div class="stock-summary">
+                <div class="summary-item"><span>Total Items</span><strong id="totalItems">0</strong></div>
+                <div class="summary-item"><span>Total Value</span><strong id="totalValue">KES 0</strong></div>
+                <div class="summary-item"><span>Categories</span><strong id="totalCategories">0</strong></div>
+            </div>
+            <div class="stock-actions">
+                <button class="btn-success" onclick="addSelectedToCart()"><i class="fas fa-plus-circle"></i> Add Selected to Cart</button>
+                <span class="action-hint"><i class="fas fa-info-circle"></i> Select items (checkbox turns green) then adjust quantity</span>
+            </div>
+            <div class="stock-list" id="stockList"></div>
+        </div>
+
+        <!-- ====== SECTION: GOODS OUT ====== -->
+        <div class="section" id="section-goods-out" style="display:none;">
+            <div class="section-header">
+                <h3><i class="fas fa-truck"></i> Sales History</h3>
+                <button class="btn-close" onclick="closeSection()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="transaction-list" id="goodsOutList"></div>
+        </div>
+
+        <!-- ====== SECTION: REPORTS ====== -->
+        <div class="section" id="section-reports" style="display:none;">
+            <div class="section-header">
+                <h3><i class="fas fa-chart-bar"></i> Reports</h3>
+                <button class="btn-close" onclick="closeSection()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="reports-grid" id="reportsGrid"></div>
+        </div>
+
+        <!-- ====== SECTION: DELIVERY ====== -->
+        <div class="section" id="section-delivery" style="display:none;">
+            <div class="section-header">
+                <h3><i class="fas fa-phone-alt"></i> Delivery Contacts</h3>
+                <button class="btn-close" onclick="closeSection()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="deliveryContacts"></div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="app-footer" id="appFooter">
+        <div class="footer-grid">
+            <div id="footerBrand">
+                <h4><i class="fas fa-rocket" style="color:#4fc3f7;"></i> SPACEWISE</h4>
+                <p>Your trusted electronics partner.</p>
+            </div>
+            <div id="footerPayments">
+                <h4>💳 Payment Options</h4>
+                <div class="payment-icons">
+                    <i class="fas fa-mobile-alt" title="M-Pesa"></i>
+                    <i class="fas fa-credit-card" title="Card"></i>
+                    <i class="fas fa-university" title="Bank Transfer"></i>
+                    <span class="coming-soon"><i class="fas fa-clock"></i> <span id="mpesaPromptText">M-Pesa Coming Soon</span></span>
+                </div>
+                <p style="margin-top:6px; font-size:12px;">Paybill: <span id="footerPaybillText">123456</span> | Account: <span id="footerAccountText">SPACEWISE</span></p>
+            </div>
+            <div id="footerContact">
+                <h4>📍 Contact</h4>
+                <p><i class="fas fa-phone"></i> +254 700 000 000</p>
+                <p><i class="fas fa-envelope"></i> info@spacewise.com</p>
+                <p><i class="fas fa-map-marker-alt"></i> Nairobi, Kenya</p>
+            </div>
+        </div>
+        <div class="footer-bottom">&copy; 2025 SPACEWISE ELECTRONICS. All rights reserved.</div>
+    </footer>
+
+    <!-- Customer Modal -->
+    <div class="modal-overlay" id="customerModal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-user"></i> Customer Details</h2>
+                <button onclick="closeCustomerModal()" class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="customerForm" onsubmit="processCheckout(event)">
+                <div class="form-group"><label><i class="fas fa-user"></i> Customer Name</label><input type="text" id="customerName" placeholder="Full name" required></div>
+                <div class="form-group"><label><i class="fas fa-phone"></i> Phone Number</label><input type="tel" id="customerPhone" placeholder="0712345678" required></div>
+                <div class="form-group"><label><i class="fas fa-envelope"></i> Email (optional)</label><input type="email" id="customerEmail" placeholder="customer@email.com"></div>
+                <button type="submit" class="btn-primary"><i class="fas fa-credit-card"></i> Complete Sale</button>
+                <button type="button" class="btn-secondary" onclick="closeCustomerModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="receiptModal" style="display:none;">
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-receipt"></i> Receipt</h2>
+                    <button onclick="closeReceipt()" class="modal-close"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="receiptBody"></div>
+                <div class="modal-footer">
+                    <button onclick="closeReceipt()" class="btn-secondary">Close</button>
+                    <button onclick="printReceipt()" class="btn-primary"><i class="fas fa-print"></i> Print</button>
+                    <button onclick="downloadReceipt()" class="btn-success"><i class="fas fa-download"></i> Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

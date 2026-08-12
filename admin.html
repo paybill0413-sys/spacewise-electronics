@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPACEWISE - Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="announcement-bar"><div class="marquee">👑 ADMIN PANEL - Full Control Over SPACEWISE</div></div>
+
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="left-menu-wrapper" onmouseenter="openLeftMenu()" onmouseleave="closeLeftMenu()">
+                <button class="menu-toggle" id="leftMenuToggle"><i class="fas fa-bars"></i></button>
+                <div class="left-dropdown" id="leftDropdown">
+                    <div class="dropdown-backdrop"></div>
+                    <div class="dropdown-content">
+                        <div class="dropdown-section">
+                            <div class="dropdown-title">Admin Tools</div>
+                            <button class="dropdown-item active" data-section="admin" onclick="navigateAdmin('admin')"><i class="fas fa-home"></i> Dashboard</button>
+                            <button class="dropdown-item" data-section="staff" onclick="navigateAdmin('staff')"><i class="fas fa-users"></i> Staff</button>
+                            <button class="dropdown-item" data-section="products" onclick="navigateAdmin('products')"><i class="fas fa-box"></i> Products</button>
+                            <button class="dropdown-item" data-section="sections" onclick="navigateAdmin('sections')"><i class="fas fa-layer-group"></i> Sections</button>
+                            <button class="dropdown-item" data-section="content" onclick="navigateAdmin('content')"><i class="fas fa-paint-brush"></i> Content</button>
+                            <button class="dropdown-item" data-section="transactions" onclick="navigateAdmin('transactions')"><i class="fas fa-history"></i> Transactions</button>
+                        </div>
+                        <div class="dropdown-footer">ADMIN v2.0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-brand"><i class="fas fa-crown"></i><span>ADMIN</span></div>
+        </div>
+        <div class="nav-user">
+            <div class="user-profile"><i class="fas fa-user-cog"></i><span class="user-email" id="adminEmail">admin@spacewise.com</span></div>
+            <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- ===== ADMIN DASHBOARD VIEW ===== -->
+        <div id="admin-view-admin">
+            <div class="admin-banner"><h1><i class="fas fa-crown"></i> Admin Dashboard</h1><p>Manage staff, products, content, and transactions</p></div>
+            <div id="adminMessage" class="message"></div>
+            <div class="stats-grid" id="adminStatsGrid">
+                <div class="stat-card"><span class="stat-icon">📦</span><div class="stat-number" id="adminGoodsIn">0</div><div class="stat-label">Goods In</div></div>
+                <div class="stat-card"><span class="stat-icon">🏠</span><div class="stat-number" id="adminStock">0</div><div class="stat-label">In Stock</div></div>
+                <div class="stat-card"><span class="stat-icon">🚚</span><div class="stat-number" id="adminSold">0</div><div class="stat-label">Sold</div></div>
+                <div class="stat-card"><span class="stat-icon">💰</span><div class="stat-number" id="adminRevenue">KES 0</div><div class="stat-label">Revenue</div></div>
+                <div class="stat-card"><span class="stat-icon">📈</span><div class="stat-number" id="adminProfit">KES 0</div><div class="stat-label">Profit</div></div>
+                <div class="stat-card"><span class="stat-icon">👥</span><div class="stat-number" id="adminStaff">0</div><div class="stat-label">Staff</div></div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:12px; margin-bottom:24px;">
+                <button class="btn-primary" onclick="navigateAdmin('staff')"><i class="fas fa-users-cog"></i> Staff</button>
+                <button class="btn-primary" onclick="navigateAdmin('products')"><i class="fas fa-box"></i> Products</button>
+                <button class="btn-primary" onclick="navigateAdmin('sections')"><i class="fas fa-layer-group"></i> Sections</button>
+                <button class="btn-primary" onclick="navigateAdmin('content')"><i class="fas fa-paint-brush"></i> Content</button>
+                <button class="btn-primary" onclick="navigateAdmin('transactions')"><i class="fas fa-history"></i> Transactions</button>
+            </div>
+        </div>
+        
+
+        <!-- ===== STAFF MANAGEMENT VIEW ===== -->
+        <div id="admin-view-staff" style="display:none;">
+            <div class="admin-section">
+                <div class="section-head">
+                    <h3><i class="fas fa-users-cog"></i> Staff Management</h3>
+                    <button class="btn-success" onclick="document.getElementById('adminStaffForm').style.display='grid'">
+                        <i class="fas fa-plus"></i> Add Staff
+                    </button>
+                </div>
+                <div id="adminStaffList"></div>
+                <form id="adminStaffForm" onsubmit="adminAddStaff(event)" style="display:none; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+                    <input type="email" id="adminStaffEmail" placeholder="staff@spacewise.com" required style="padding:10px 14px; border:2px solid #e8eaed; border-radius:10px; font-size:14px;">
+                    <input type="text" id="adminStaffName" placeholder="Full Name" required style="padding:10px 14px; border:2px solid #e8eaed; border-radius:10px; font-size:14px;">
+                    <button type="submit" class="btn-primary" style="grid-column:1/3;"><i class="fas fa-plus"></i> Add Staff</button>
+                    <button type="button" class="btn-secondary" style="grid-column:1/3;" onclick="document.getElementById('adminStaffForm').style.display='none'">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== PRODUCTS MANAGEMENT VIEW ===== -->
+        <div id="admin-view-products" style="display:none;">
+            <div class="admin-section">
+                <div class="section-head">
+                    <h3><i class="fas fa-box"></i> Manage Products</h3>
+                    <button class="btn-success" onclick="document.getElementById('adminProductForm').style.display='grid'">
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
+                </div>
+                <div id="adminProductList"></div>
+                <form id="adminProductForm" onsubmit="adminAddProduct(event)" style="display:none; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+                    <input type="text" id="adminProductName" placeholder="Product Name" required style="padding:10px 14px; border:2px solid #e8eaed; border-radius:10px; font-size:14px;">
+                    <input type="text" id="adminProductCategory" placeholder="Category" required style="padding:10px 14px; border:2px solid #e8eaed; border-radius:10px; font-size:14px;">
+                    <input type="text" id="adminProductBrand" placeholder="Brand" style="padding:10px 14px; border:2px solid #e8eaed; border-radius:10px; font-size:14px;">
+                    <input type="text" id="adminProductSize" placeholder="Size" style="padding:10px 14px; border:2px solid #e8eaed; border-radius:10px; font-size:14px;">
+                    <input type="number" id="adminProductPrice" placeholder="Price (KES)" required style="padding:10px 14px; border:2px solid #e8eaed; border-radius:10px; font-size:14px;">
+                    <input type="text" id="adminProductImage" placeholder="Image URL" style="padding:10px 14px; border:2px solid #e8eaed; border-radius:10px; font-size:14px;">
+                    <button type="submit" class="btn-primary" style="grid-column:1/3;"><i class="fas fa-plus"></i> Add Product</button>
+                    <button type="button" class="btn-secondary" style="grid-column:1/3;" onclick="document.getElementById('adminProductForm').style.display='none'">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== SECTIONS MANAGEMENT VIEW ===== -->
+        <div id="admin-view-sections" style="display:none;">
+            <div class="admin-section">
+                <div class="section-head">
+                    <h3><i class="fas fa-layer-group"></i> Section Editor</h3>
+                    <button class="btn-success" onclick="document.getElementById('adminSectionForm').style.display='flex'">
+                        <i class="fas fa-plus"></i> Add Section
+                    </button>
+                </div>
+                <div id="adminSectionList"></div>
+                <form id="adminSectionForm" onsubmit="adminAddSection(event)" style="display:none; gap:12px; margin-top:12px; flex-wrap:wrap;">
+                    <input type="text" id="adminSectionName" placeholder="Section ID (e.g., promotions)" required style="flex:1; padding:10px 14px; border:2px solid #e8eaed; border-radius:10px; font-size:14px; min-width:200px;">
+                    <button type="submit" class="btn-primary" style="width:auto; padding:10px 20px;"><i class="fas fa-plus"></i> Add</button>
+                    <button type="button" class="btn-secondary" style="width:auto; padding:10px 20px;" onclick="document.getElementById('adminSectionForm').style.display='none'">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== CONTENT CONTROL VIEW ===== -->
+        <div id="admin-view-content" style="display:none;">
+            <div class="admin-section">
+                <div class="section-head"><h3><i class="fas fa-paint-brush"></i> Content Control</h3></div>
+                
+                <div style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:6px;"><i class="fas fa-image"></i> Login Background</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input type="text" id="loginBgInput" placeholder="Image URL" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+                        <button class="btn-primary" onclick="saveLoginBg()" style="width:auto; padding:8px 16px;">Save</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:6px;"><i class="fas fa-image"></i> Dashboard Background</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input type="text" id="dashboardBgInput" placeholder="Image URL" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+                        <button class="btn-primary" onclick="saveDashboardBg()" style="width:auto; padding:8px 16px;">Save</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:6px;"><i class="fas fa-logo"></i> Logo URL</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input type="text" id="logoUrlInput" placeholder="Logo Image URL" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+                        <button class="btn-primary" onclick="saveLogo()" style="width:auto; padding:8px 16px;">Save</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:6px;"><i class="fas fa-quote-right"></i> Motivational Quotes</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <textarea id="quotesEditor" rows="4" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px; font-family:inherit;"></textarea>
+                        <button class="btn-primary" onclick="saveQuotes()" style="width:auto; padding:8px 16px;">Save</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:6px;"><i class="fas fa-credit-card"></i> Footer Payment Options</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input type="text" id="footerPaybill" placeholder="Paybill Number" style="flex:1; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+                        <input type="text" id="footerAccount" placeholder="Account Number" style="flex:1; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+                        <input type="text" id="footerMpesaPrompt" placeholder="M-Pesa Prompt" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+                        <button class="btn-primary" onclick="saveFooterOptions()" style="width:auto; padding:8px 16px;">Save</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="margin-bottom:6px;"><i class="fas fa-truck"></i> Delivery Contacts</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <textarea id="deliveryEditorText" rows="4" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px; font-family:inherit;"></textarea>
+                        <button class="btn-primary" onclick="saveDeliveryContacts()" style="width:auto; padding:8px 16px;">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Admin Background -->
+<div style="margin-bottom:16px;">
+    <h4 style="margin-bottom:6px;"><i class="fas fa-image"></i> Admin Background</h4>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input type="text" id="adminBgInput" placeholder="Image URL" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+        <button class="btn-primary" onclick="saveAdminBg()" style="width:auto; padding:8px 16px;">Save</button>
+    </div>
+</div>
+<!-- Section Images Management -->
+<div style="margin-bottom:16px;">
+    <h4 style="margin-bottom:6px;"><i class="fas fa-images"></i> Section Background Images</h4>
+    <p style="color:#7f8c8d; font-size:13px; margin-bottom:8px;">Edit images for each section (default and custom)</p>
+    <div id="sectionImagesContainer"></div>
+</div>
+
+        <!-- ===== TRANSACTIONS VIEW ===== -->
+        <div id="admin-view-transactions" style="display:none;">
+            <div class="admin-section">
+                <h3><i class="fas fa-history"></i> All Transactions</h3>
+                <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+                    <button class="btn-secondary" onclick="showAdminTab('goods-in')" id="adminTabGoodsIn" style="background:#1a1a2e; color:white;"><i class="fas fa-boxes"></i> Goods In</button>
+                    <button class="btn-secondary" onclick="showAdminTab('goods-out')" id="adminTabGoodsOut"><i class="fas fa-truck"></i> Sales</button>
+                </div>
+                <div class="table-wrapper" id="adminGoodsInTable" style="overflow-x:auto;">
+                    <table><thead><tr style="background:#1a1a2e; color:white;"><th>Date</th><th>Product</th><th>Qty</th><th>Cost</th><th>Location</th><th>Supplier</th><th>Staff</th></tr></thead><tbody id="adminGoodsInBody"></tbody></table>
+                </div>
+                <div class="table-wrapper" id="adminGoodsOutTable" style="display:none; overflow-x:auto;">
+                    <table><thead><tr style="background:#1a1a2e; color:white;"><th>Date</th><th>Order #</th><th>Product</th><th>Qty</th><th>Price</th><th>Customer</th><th>Staff</th></tr></thead><tbody id="adminGoodsOutBody"></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="app-footer" id="appFooter">
+        <div class="footer-grid">
+            <div id="footerBrand">
+                <h4><i class="fas fa-rocket" style="color:#4fc3f7;"></i> SPACEWISE</h4>
+                <p>Your trusted electronics partner.</p>
+            </div>
+            <div id="footerPayments">
+                <h4>💳 Payment Options</h4>
+                <div class="payment-icons">
+                    <i class="fas fa-mobile-alt" title="M-Pesa"></i>
+                    <i class="fas fa-credit-card" title="Card"></i>
+                    <i class="fas fa-university" title="Bank Transfer"></i>
+                    <span class="coming-soon"><i class="fas fa-clock"></i> <span id="mpesaPromptText">M-Pesa Coming Soon</span></span>
+                </div>
+                <p style="margin-top:6px; font-size:12px;">Paybill: <span id="footerPaybillText">123456</span> | Account: <span id="footerAccountText">SPACEWISE</span></p>
+            </div>
+            <div id="footerContact">
+                <h4>📍 Contact</h4>
+                <p><i class="fas fa-phone"></i> +254 700 000 000</p>
+                <p><i class="fas fa-envelope"></i> info@spacewise.com</p>
+                <p><i class="fas fa-map-marker-alt"></i> Nairobi, Kenya</p>
+            </div>
+        </div>
+        <div class="footer-bottom">&copy; 2025 SPACEWISE ELECTRONICS. All rights reserved.</div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

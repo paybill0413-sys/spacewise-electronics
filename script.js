@@ -96,10 +96,12 @@ const DEFAULT_SECTION_IMAGES = {
 };
 
 // ============================================
-// DATA STORE
+// DEFAULT DATA
 // ============================================
-const DB = {
-    staff: [{ email: 'admin@spacewise.com', name: 'Admin', role: 'admin' }],
+const DEFAULT_DATA = {
+    staff: [
+        { email: 'admin@spacewise.com', name: 'Admin', role: 'admin', password: 'admin123' }
+    ],
     goodsIn: [],
     stock: [],
     goodsOut: [],
@@ -133,72 +135,89 @@ const DB = {
     logo: ''
 };
 
-const ADMIN_EMAIL = 'admin@spacewise.com';
-const ADMIN_PASSWORD = 'admin123';
-let currentUser = null;
-let currentView = 'dashboard';
-let currentAdminView = 'admin';
+const DB_KEY = 'spacewiseData';
 
 // ============================================
-// INITIALIZATION
+// DATABASE FUNCTIONS
 // ============================================
-document.addEventListener('DOMContentLoaded', function() {
-    loadFromLocalStorage();
-    renderQuotes();
-    updateAllBadges();
-});
-
-function saveToLocalStorage() {
+function getDB() {
     try {
-        localStorage.setItem('spacewiseData', JSON.stringify(DB));
-    } catch (e) { console.error('Save error:', e); }
-}
-
-function loadFromLocalStorage() {
-    try {
-        const data = localStorage.getItem('spacewiseData');
+        const data = localStorage.getItem(DB_KEY);
         if (data) {
             const parsed = JSON.parse(data);
-            Object.keys(parsed).forEach(key => {
-                if (key in DB) DB[key] = parsed[key];
-            });
-            if (!DB.customSections) DB.customSections = {};
-            if (!DB.sectionImages) DB.sectionImages = { ...DEFAULT_SECTION_IMAGES };
-            if (!DB.adminBg) DB.adminBg = 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80';
+            // Ensure admin has correct password
+            const admin = parsed.staff.find(s => s.role === 'admin');
+            if (admin && !admin.password) {
+                admin.password = 'admin123';
+            }
+            return parsed;
         }
-    } catch (e) { console.error('Load error:', e); }
+    } catch (e) {
+        console.error('Load error:', e);
+    }
+    // Return default data
+    return JSON.parse(JSON.stringify(DEFAULT_DATA));
 }
 
+function saveDB(data) {
+    try {
+        localStorage.setItem(DB_KEY, JSON.stringify(data));
+        console.log('✅ Data saved to localStorage');
+        return true;
+    } catch (e) {
+        console.error('Save error:', e);
+        return false;
+    }
+}
+
+function initDB() {
+    if (!localStorage.getItem(DB_KEY)) {
+        saveDB(JSON.parse(JSON.stringify(DEFAULT_DATA)));
+        console.log('✅ Initialized new database');
+    }
+    return getDB();
+}
+
+// ============================================
+// GLOBAL DB VARIABLE
+// ============================================
+let DB = getDB();
+
+// ============================================
+// RENDER QUOTES
+// ============================================
 function renderQuotes() {
-    const track = document.getElementById('marqueeTrack');
+    var track = document.getElementById('marqueeTrack');
     if (!track) return;
-    const qs = DB.quotes || [];
-    const items = [...qs, ...qs];
-    track.innerHTML = items.map(q => `<span class="marquee-item">${q}</span>`).join('');
+    var qs = DB.quotes || [];
+    var items = qs.concat(qs);
+    track.innerHTML = items.map(function(q) {
+        return '<span class="marquee-item">' + q + '</span>';
+    }).join('');
 }
 
 // ============================================
 // LEFT DROPDOWN MENU
 // ============================================
-let menuTimeout;
+var menuTimeout;
 
 function openLeftMenu() {
     clearTimeout(menuTimeout);
-    const dropdown = document.getElementById('leftDropdown');
+    var dropdown = document.getElementById('leftDropdown');
     if (dropdown) dropdown.classList.add('open');
-    const mainContent = document.querySelector('.main-content');
+    var mainContent = document.querySelector('.main-content');
     if (mainContent) mainContent.style.filter = 'blur(4px)';
-    const footer = document.querySelector('.app-footer');
+    var footer = document.querySelector('.app-footer');
     if (footer) footer.style.filter = 'blur(4px)';
 }
 
 function closeLeftMenu() {
-    menuTimeout = setTimeout(() => {
-        const dropdown = document.getElementById('leftDropdown');
+    menuTimeout = setTimeout(function() {
+        var dropdown = document.getElementById('leftDropdown');
         if (dropdown) dropdown.classList.remove('open');
-        const mainContent = document.querySelector('.main-content');
+        var mainContent = document.querySelector('.main-content');
         if (mainContent) mainContent.style.filter = 'none';
-        const footer = document.querySelector('.app-footer');
+        var footer = document.querySelector('.app-footer');
         if (footer) footer.style.filter = 'none';
     }, 400);
 }
@@ -206,7 +225,7 @@ function closeLeftMenu() {
 // ============================================
 // CART DROPDOWN
 // ============================================
-let cartTimeout;
+var cartTimeout;
 
 function openCartDropdown() {
     clearTimeout(cartTimeout);
@@ -214,40 +233,40 @@ function openCartDropdown() {
 }
 
 function closeCartDropdown() {
-    cartTimeout = setTimeout(() => {
+    cartTimeout = setTimeout(function() {
         document.getElementById('cartDropdown').classList.remove('open');
     }, 400);
 }
 
 function toggleCartDropdown() {
-    const dd = document.getElementById('cartDropdown');
+    var dd = document.getElementById('cartDropdown');
     dd.classList.toggle('open');
     renderCartDropdown();
 }
 
 function renderCartDropdown() {
-    const container = document.getElementById('cartDropdownItems');
-    const totalSpan = document.getElementById('cartDropdownTotal');
+    var container = document.getElementById('cartDropdownItems');
+    var totalSpan = document.getElementById('cartDropdownTotal');
     if (!container) return;
     if (DB.cart.length === 0) {
         container.innerHTML = '<div style="padding:12px 0; color:#7f8c8d; text-align:center;">Cart is empty</div>';
         totalSpan.textContent = 'KES 0';
         return;
     }
-    let html = '';
-    let total = 0;
-    DB.cart.forEach((item, index) => {
+    var html = '';
+    var total = 0;
+    DB.cart.forEach(function(item, index) {
         total += item.price * item.quantity;
         html += `
             <div class="cart-dropdown-item">
                 <span>${item.productName} x${item.quantity}</span>
                 <span style="display:flex; align-items:center; gap:8px;">
-                    <button onclick="updateCartQty(${index}, ${item.quantity - 1})" style="background:var(--danger); color:white; border:none; border-radius:4px; width:24px; height:24px; cursor:pointer; font-size:14px;">−</button>
+                    <button onclick="updateCartQty(${index}, ${item.quantity - 1})" style="background:#e74c3c; color:white; border:none; border-radius:4px; width:24px; height:24px; cursor:pointer; font-size:14px;">−</button>
                     <span style="font-weight:600; min-width:20px; text-align:center;">${item.quantity}</span>
-                    <button onclick="updateCartQty(${index}, ${item.quantity + 1})" style="background:var(--success); color:white; border:none; border-radius:4px; width:24px; height:24px; cursor:pointer; font-size:14px;">+</button>
+                    <button onclick="updateCartQty(${index}, ${item.quantity + 1})" style="background:#27ae60; color:white; border:none; border-radius:4px; width:24px; height:24px; cursor:pointer; font-size:14px;">+</button>
                 </span>
                 <span>KES ${(item.price * item.quantity).toLocaleString()}</span>
-                <button onclick="removeFromCart(${index})" style="background:var(--danger); color:white; border:none; border-radius:4px; width:24px; height:24px; cursor:pointer;">✕</button>
+                <button onclick="removeFromCart(${index})" style="background:#e74c3c; color:white; border:none; border-radius:4px; width:24px; height:24px; cursor:pointer;">✕</button>
             </div>
         `;
     });
@@ -256,74 +275,201 @@ function renderCartDropdown() {
 }
 
 // ============================================
-// LOGIN FUNCTIONS
+// STAFF LOGIN
 // ============================================
-function handleLogin(event) {
+function handleStaffLogin(event) {
     event.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    if (!email) { showMessage('loginMessage', 'error', '⚠️ Please enter email'); return; }
-    if (!isValidEmail(email)) { showMessage('loginMessage', 'error', '⚠️ Invalid email'); return; }
-    const staff = DB.staff.find(s => s.email.toLowerCase() === email.toLowerCase());
-    if (!staff) { showMessage('loginMessage', 'error', '⚠️ Access denied. Contact admin.'); return; }
+    var email = document.getElementById('email').value.trim();
+    var msg = document.getElementById('loginMessage');
+    var btn = document.getElementById('loginBtn');
+
+    if (!email) {
+        showMessage('loginMessage', 'error', '⚠️ Please enter your email');
+        return;
+    }
+
     showMessage('loginMessage', 'loading', '⏳ Logging in...');
-    document.getElementById('loginBtn').disabled = true;
-    setTimeout(() => {
+    btn.disabled = true;
+
+    // Reload DB to ensure latest data
+    DB = getDB();
+
+    try {
+        var staff = DB.staff.find(function(s) {
+            return s.email.toLowerCase() === email.toLowerCase() && s.role !== 'admin';
+        });
+        
+        if (!staff) {
+            throw new Error('Access denied. Contact admin.');
+        }
+        
         currentUser = staff;
         showMessage('loginMessage', 'success', '✅ Welcome ' + staff.name);
-        setTimeout(() => {
-            if (staff.role === 'admin') window.location.href = 'admin.html';
-            else window.location.href = 'dashboard.html?email=' + encodeURIComponent(email);
+        
+        setTimeout(function() {
+            window.location.href = 'dashboard.html?email=' + encodeURIComponent(email);
         }, 1000);
-        document.getElementById('loginBtn').disabled = false;
-    }, 1500);
+    } catch (err) {
+        showMessage('loginMessage', 'error', err.message);
+    }
+    btn.disabled = false;
 }
 
-function goToAdmin() { window.location.href = 'admin.html'; }
+// ============================================
+// ADMIN LOGIN - FIXED!
+// ============================================
+function showAdminLoginPrompt() {
+    // Reload DB to ensure latest data
+    DB = getDB();
+    
+    var password = prompt('Enter admin password:');
+    
+    if (password === null) {
+        return; // User clicked cancel
+    }
+    
+    if (password.trim() === '') {
+        alert('⚠️ Please enter a password');
+        return;
+    }
+
+    // Find admin
+    var admin = DB.staff.find(function(s) {
+        return s.role === 'admin';
+    });
+
+    if (!admin) {
+        alert('❌ Admin account not found. Please contact support.');
+        return;
+    }
+
+    console.log('Entered password:', password.trim());
+    console.log('Expected password:', admin.password);
+
+    // Check password
+    if (admin.password !== password.trim()) {
+        alert('❌ Invalid password. Please try again.');
+        return;
+    }
+
+    // Login successful - create session
+    localStorage.setItem('spacewiseSession', JSON.stringify({
+        userId: admin.email,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+        loginTime: Date.now()
+    }));
+    
+    currentUser = admin;
+    console.log('✅ Admin login successful! Redirecting...');
+    window.location.href = 'admin.html';
+}
 
 function logout() {
     if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('spacewiseSession');
         currentUser = null;
         window.location.href = 'index.html';
     }
 }
 
-function isValidEmail(email) {
-    return /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(email);
-}
-
 function showMessage(id, type, text) {
-    const msgDiv = document.getElementById(id);
+    var msgDiv = document.getElementById(id);
     if (!msgDiv) return;
     msgDiv.className = 'message ' + type;
     msgDiv.textContent = text;
     msgDiv.style.display = 'flex';
     if (type !== 'loading') {
-        setTimeout(() => { msgDiv.style.display = 'none'; }, 4000);
+        setTimeout(function() {
+            msgDiv.style.display = 'none';
+        }, 4000);
     }
 }
 
 function getEmailFromUrl() {
-    const params = new URLSearchParams(window.location.search);
+    var params = new URLSearchParams(window.location.search);
     return params.get('email');
+}
+
+// ============================================
+// CHANGE ADMIN PASSWORD
+// ============================================
+function changeAdminPassword(event) {
+    event.preventDefault();
+    var currentPassword = document.getElementById('currentPassword').value.trim();
+    var newPassword = document.getElementById('newAdminPassword').value.trim();
+    var confirmPassword = document.getElementById('confirmAdminPassword').value.trim();
+    var msg = document.getElementById('passwordChangeMessage');
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        msg.className = 'message error';
+        msg.textContent = '⚠️ Please fill in all fields';
+        msg.style.display = 'flex';
+        return;
+    }
+
+    if (newPassword.length < 4) {
+        msg.className = 'message error';
+        msg.textContent = '⚠️ Password must be at least 4 characters';
+        msg.style.display = 'flex';
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        msg.className = 'message error';
+        msg.textContent = '⚠️ Passwords do not match';
+        msg.style.display = 'flex';
+        return;
+    }
+
+    // Reload DB
+    DB = getDB();
+    var admin = DB.staff.find(function(s) { return s.role === 'admin'; });
+    if (!admin) {
+        msg.className = 'message error';
+        msg.textContent = '❌ Admin not found';
+        msg.style.display = 'flex';
+        return;
+    }
+
+    if (admin.password !== currentPassword) {
+        msg.className = 'message error';
+        msg.textContent = '❌ Current password is incorrect';
+        msg.style.display = 'flex';
+        return;
+    }
+
+    admin.password = newPassword;
+    saveDB(DB);
+
+    msg.className = 'message success';
+    msg.textContent = '✅ Password changed successfully!';
+    msg.style.display = 'flex';
+    document.getElementById('changePasswordForm').reset();
+
+    setTimeout(function() {
+        msg.style.display = 'none';
+    }, 3000);
 }
 
 // ============================================
 // ADMIN NAVIGATION
 // ============================================
 function navigateAdmin(view) {
-    const views = ['admin', 'staff', 'products', 'sections', 'content', 'transactions'];
-    views.forEach(v => {
-        const el = document.getElementById('admin-view-' + v);
+    var views = ['admin', 'staff', 'products', 'sections', 'content', 'transactions', 'password', 'reset'];
+    views.forEach(function(v) {
+        var el = document.getElementById('admin-view-' + v);
         if (el) el.style.display = 'none';
     });
 
-    const target = document.getElementById('admin-view-' + view);
+    var target = document.getElementById('admin-view-' + view);
     if (target) {
         target.style.display = 'block';
         currentAdminView = view;
     }
 
-    document.querySelectorAll('.dropdown-item').forEach(item => {
+    document.querySelectorAll('.dropdown-item').forEach(function(item) {
         item.classList.toggle('active', item.dataset.section === view);
     });
 
@@ -341,11 +487,12 @@ function navigateAdmin(view) {
 // ADMIN: LOAD STAFF
 // ============================================
 function loadAdminStaff() {
-    const list = document.getElementById('adminStaffList');
+    var list = document.getElementById('adminStaffList');
     if (!list) return;
     list.innerHTML = '';
-    DB.staff.filter(s => s.role !== 'admin').forEach(s => {
-        const div = document.createElement('div');
+    DB = getDB();
+    DB.staff.filter(function(s) { return s.role !== 'admin'; }).forEach(function(s) {
+        var div = document.createElement('div');
         div.className = 'staff-item';
         div.innerHTML = `
             <div class="info"><div class="name">${s.name}</div><div class="email">${s.email}</div></div>
@@ -353,20 +500,53 @@ function loadAdminStaff() {
         `;
         list.appendChild(div);
     });
-    if (DB.staff.filter(s => s.role !== 'admin').length === 0) {
+    if (DB.staff.filter(function(s) { return s.role !== 'admin'; }).length === 0) {
         list.innerHTML = '<p style="color:#7f8c8d; padding:8px;">No staff members added yet</p>';
     }
+}
+
+function adminAddStaff(event) {
+    event.preventDefault();
+    var email = document.getElementById('adminStaffEmail').value.trim();
+    var name = document.getElementById('adminStaffName').value.trim();
+    if (!email || !name) {
+        showMessage('adminMessage', 'error', '⚠️ Fill all fields');
+        return;
+    }
+    DB = getDB();
+    if (DB.staff.find(function(s) { return s.email.toLowerCase() === email.toLowerCase(); })) {
+        showMessage('adminMessage', 'error', '⚠️ Staff already exists');
+        return;
+    }
+    DB.staff.push({ email: email, name: name, role: 'staff' });
+    saveDB(DB);
+    showMessage('adminMessage', 'success', '✅ Staff added successfully!');
+    document.getElementById('adminStaffForm').reset();
+    document.getElementById('adminStaffForm').style.display = 'none';
+    loadAdminStaff();
+    loadAdminStats();
+}
+
+function adminRemoveStaff(email) {
+    if (!confirm('Remove ' + email + '?')) return;
+    DB = getDB();
+    DB.staff = DB.staff.filter(function(s) { return s.email !== email; });
+    saveDB(DB);
+    loadAdminStaff();
+    loadAdminStats();
+    showMessage('adminMessage', 'success', '✅ Staff removed successfully!');
 }
 
 // ============================================
 // ADMIN: LOAD PRODUCTS
 // ============================================
 function loadAdminProducts() {
-    const list = document.getElementById('adminProductList');
+    var list = document.getElementById('adminProductList');
     if (!list) return;
+    DB = getDB();
     list.innerHTML = '';
-    DB.products.forEach(p => {
-        const div = document.createElement('div');
+    DB.products.forEach(function(p) {
+        var div = document.createElement('div');
         div.className = 'product-item';
         div.innerHTML = `
             <div class="info"><div class="name">${p.name}</div><div class="category">${p.category} • KES ${p.price}</div></div>
@@ -382,37 +562,99 @@ function loadAdminProducts() {
     }
 }
 
+function adminAddProduct(event) {
+    event.preventDefault();
+    var name = document.getElementById('adminProductName').value.trim();
+    var category = document.getElementById('adminProductCategory').value.trim();
+    var price = parseFloat(document.getElementById('adminProductPrice').value);
+    var image = document.getElementById('adminProductImage').value.trim();
+
+    if (!name || !category || !price) {
+        showMessage('adminMessage', 'error', '⚠️ Fill in name, category and price');
+        return;
+    }
+
+    DB = getDB();
+    var newProduct = {
+        id: 'P' + String(DB.products.length + 1).padStart(3, '0'),
+        name: name,
+        category: category,
+        price: price,
+        image: image || ''
+    };
+    DB.products.push(newProduct);
+    saveDB(DB);
+    showMessage('adminMessage', 'success', '✅ Product added successfully!');
+    document.getElementById('adminProductForm').reset();
+    document.getElementById('adminProductForm').style.display = 'none';
+    loadAdminProducts();
+    populateProductSelect();
+}
+
+function editProduct(productId) {
+    var product = DB.products.find(function(p) { return p.id === productId; });
+    if (!product) return;
+
+    var newName = prompt('Product Name:', product.name);
+    if (newName === null) return;
+    var newCategory = prompt('Category:', product.category);
+    if (newCategory === null) return;
+    var newPrice = prompt('Price (KES):', product.price);
+    if (newPrice === null) return;
+
+    product.name = newName.trim() || product.name;
+    product.category = newCategory.trim() || product.category;
+    product.price = parseFloat(newPrice) || product.price;
+
+    saveDB(DB);
+    loadAdminProducts();
+    populateProductSelect();
+    showMessage('adminMessage', 'success', '✅ Product updated successfully!');
+}
+
+function adminRemoveProduct(productId) {
+    if (!confirm('Remove this product?')) return;
+    DB = getDB();
+    DB.products = DB.products.filter(function(p) { return p.id !== productId; });
+    saveDB(DB);
+    loadAdminProducts();
+    populateProductSelect();
+    showMessage('adminMessage', 'success', '✅ Product removed successfully!');
+}
+
 // ============================================
 // ADMIN: LOAD SECTIONS
 // ============================================
 function loadAdminSections() {
-    const list = document.getElementById('adminSectionList');
+    var list = document.getElementById('adminSectionList');
     if (!list) return;
-    const allSections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
-    const fullList = [...allSections, ...DB.sections.filter(s => !allSections.includes(s))];
+    DB = getDB();
+    var allSections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
+    var fullList = allSections.concat(DB.sections.filter(function(s) {
+        return allSections.indexOf(s) === -1;
+    }));
     list.innerHTML = '';
-    fullList.forEach(s => {
-        const isDefault = allSections.includes(s);
-        const isCustom = !isDefault;
-        const names = {
+    fullList.forEach(function(s) {
+        var isDefault = allSections.indexOf(s) !== -1;
+        var names = {
             'goods-in': 'Goods In',
             'in-house': 'In-House Stock',
             'goods-out': 'Goods Out',
             'reports': 'Reports',
             'delivery': 'Delivery'
         };
-        const displayName = names[s] || s.replace('-', ' ').toUpperCase();
-        const hasContent = DB.customSections && DB.customSections[s];
+        var displayName = names[s] || s.replace('-', ' ').toUpperCase();
+        var hasContent = DB.customSections && DB.customSections[s];
         
-        const div = document.createElement('div');
+        var div = document.createElement('div');
         div.className = 'section-item';
         div.innerHTML = `
             <div class="info">
-                <div class="name">${displayName} ${isCustom ? '⭐' : ''}</div>
-                ${isCustom ? `<div style="font-size:12px; color:#7f8c8d;">${hasContent ? '✅ Has content' : '⚠️ No content set'}</div>` : '<span style="font-size:12px; color:#7f8c8d;">Default</span>'}
+                <div class="name">${displayName} ${!isDefault ? '⭐' : ''}</div>
+                ${!isDefault ? `<div style="font-size:12px; color:#7f8c8d;">${hasContent ? '✅ Has content' : '⚠️ No content set'}</div>` : '<span style="font-size:12px; color:#7f8c8d;">Default</span>'}
             </div>
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                ${isCustom ? `
+                ${!isDefault ? `
                     <button class="btn-edit" onclick="editCustomSection('${s}')"><i class="fas fa-edit"></i> Edit Content</button>
                     <button class="btn-remove" onclick="adminRemoveSection('${s}')"><i class="fas fa-trash"></i> Remove</button>
                 ` : `<button class="btn-edit" onclick="editSectionImage('${s}')"><i class="fas fa-image"></i> Edit Image</button>`}
@@ -422,111 +664,105 @@ function loadAdminSections() {
     });
 }
 
-// ============================================
-// ADMIN: EDIT SECTION IMAGE
-// ============================================
+function adminAddSection(event) {
+    event.preventDefault();
+    var name = document.getElementById('adminSectionName').value.trim().toLowerCase().replace(/\s+/g, '-');
+    if (!name) {
+        showMessage('adminMessage', 'error', '⚠️ Enter a section name');
+        return;
+    }
+    DB = getDB();
+    if (DB.sections.indexOf(name) !== -1) {
+        showMessage('adminMessage', 'error', '⚠️ Section already exists');
+        return;
+    }
+    DB.sections.push(name);
+    if (!DB.customSections) DB.customSections = {};
+    DB.customSections[name] = { 
+        title: name.replace('-', ' ').toUpperCase(), 
+        content: 'Welcome to ' + name.replace('-', ' ').toUpperCase() + '! Add your content here.' 
+    };
+    if (!DB.sectionImages) DB.sectionImages = {};
+    DB.sectionImages[name] = 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800&q=80';
+    saveDB(DB);
+    showMessage('adminMessage', 'success', '✅ Section added!');
+    document.getElementById('adminSectionForm').reset();
+    document.getElementById('adminSectionForm').style.display = 'none';
+    loadAdminSections();
+    renderSections();
+    renderDynamicSections();
+}
+
+function adminRemoveSection(name) {
+    if (!confirm('Remove section "' + name + '"?')) return;
+    DB = getDB();
+    DB.sections = DB.sections.filter(function(s) { return s !== name; });
+    if (DB.customSections) delete DB.customSections[name];
+    if (DB.sectionImages) delete DB.sectionImages[name];
+    saveDB(DB);
+    loadAdminSections();
+    renderSections();
+    renderDynamicSections();
+    showMessage('adminMessage', 'success', '✅ Section removed!');
+}
+
+function editCustomSection(sectionId) {
+    var content = DB.customSections && DB.customSections[sectionId] ? DB.customSections[sectionId] : { title: '', content: '' };
+    var title = prompt('Section Title:', content.title || sectionId.replace('-', ' ').toUpperCase());
+    if (title === null) return;
+    var contentText = prompt('Section Content (HTML allowed):', content.content || 'Add your content here...');
+    if (contentText === null) return;
+    if (!DB.customSections) DB.customSections = {};
+    DB.customSections[sectionId] = { title: title || sectionId.replace('-', ' ').toUpperCase(), content: contentText };
+    saveDB(DB);
+    loadAdminSections();
+    renderDynamicSections();
+    showMessage('adminMessage', 'success', '✅ Custom section content updated!');
+}
+
 function editSectionImage(sectionId) {
-    const currentImage = DB.sectionImages && DB.sectionImages[sectionId] ? DB.sectionImages[sectionId] : '';
-    const newImage = prompt('Section Image URL (for ' + sectionId.replace('-', ' ').toUpperCase() + '):', currentImage);
+    var currentImage = DB.sectionImages && DB.sectionImages[sectionId] ? DB.sectionImages[sectionId] : '';
+    var newImage = prompt('Section Image URL (for ' + sectionId.replace('-', ' ').toUpperCase() + '):', currentImage);
     if (newImage === null) return;
     if (!DB.sectionImages) DB.sectionImages = {};
     DB.sectionImages[sectionId] = newImage.trim() || '';
-    saveToLocalStorage();
+    saveDB(DB);
     renderSectionBackgrounds();
     loadAdminSections();
     showMessage('adminMessage', 'success', '✅ Section image updated!');
 }
 
 // ============================================
-// RENDER SECTION BACKGROUNDS
-// ============================================
-function renderSectionBackgrounds() {
-    const sections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
-    sections.forEach(id => {
-        const wrapper = document.querySelector(`#section-${id} .section-bg`);
-        if (wrapper && DB.sectionImages && DB.sectionImages[id]) {
-            wrapper.style.backgroundImage = `url('${DB.sectionImages[id]}')`;
-            wrapper.style.opacity = '0.08';
-        } else if (wrapper && DEFAULT_SECTION_IMAGES[id]) {
-            wrapper.style.backgroundImage = `url('${DEFAULT_SECTION_IMAGES[id]}')`;
-            wrapper.style.opacity = '0.08';
-        }
-    });
-    
-    if (DB.customSections) {
-        Object.keys(DB.customSections).forEach(id => {
-            const wrapper = document.querySelector(`#section-${id} .section-bg`);
-            if (wrapper && DB.sectionImages && DB.sectionImages[id]) {
-                wrapper.style.backgroundImage = `url('${DB.sectionImages[id]}')`;
-                wrapper.style.opacity = '0.08';
-            }
-        });
-    }
-}
-
-// ============================================
-// ADMIN: EDIT CUSTOM SECTION CONTENT
-// ============================================
-function editCustomSection(sectionId) {
-    const content = DB.customSections && DB.customSections[sectionId] ? DB.customSections[sectionId] : { title: '', content: '' };
-    
-    const title = prompt('Section Title:', content.title || sectionId.replace('-', ' ').toUpperCase());
-    if (title === null) return;
-    
-    const contentText = prompt('Section Content (HTML allowed):', content.content || 'Add your content here...');
-    if (contentText === null) return;
-    
-    if (!DB.customSections) DB.customSections = {};
-    DB.customSections[sectionId] = { title: title || sectionId.replace('-', ' ').toUpperCase(), content: contentText };
-    saveToLocalStorage();
-    loadAdminSections();
-    renderDynamicSections();
-    showMessage('adminMessage', 'success', '✅ Custom section content updated!');
-}
-
-// ============================================
 // ADMIN: LOAD CONTENT
 // ============================================
 function loadAdminContent() {
-    const quotesEditor = document.getElementById('quotesEditor');
-    if (quotesEditor && DB.quotes) {
-        quotesEditor.value = DB.quotes.join('\n');
-    }
-    const deliveryEditor = document.getElementById('deliveryEditorText');
-    if (deliveryEditor && DB.delivery) {
-        deliveryEditor.value = DB.delivery.map(d => `${d.name} | ${d.phone} | ${d.status}`).join('\n');
-    }
-    if (DB.footer) {
-        const paybillInput = document.getElementById('footerPaybill');
-        if (paybillInput) paybillInput.value = DB.footer.paybill || '';
-        const accountInput = document.getElementById('footerAccount');
-        if (accountInput) accountInput.value = DB.footer.account || '';
-        const mpesaInput = document.getElementById('footerMpesaPrompt');
-        if (mpesaInput) mpesaInput.value = DB.footer.mpesaPrompt || '';
-    }
-    const loginBgInput = document.getElementById('loginBgInput');
-    if (loginBgInput) loginBgInput.value = DB.loginBg || '';
-    const dashboardBgInput = document.getElementById('dashboardBgInput');
-    if (dashboardBgInput) dashboardBgInput.value = DB.dashboardBg || '';
-    const adminBgInput = document.getElementById('adminBgInput');
-    if (adminBgInput) adminBgInput.value = DB.adminBg || '';
-    const logoInput = document.getElementById('logoUrlInput');
-    if (logoInput) logoInput.value = DB.logo || '';
+    DB = getDB();
+    document.getElementById('loginBgInput').value = DB.loginBg || '';
+    document.getElementById('dashboardBgInput').value = DB.dashboardBg || '';
+    document.getElementById('adminBgInput').value = DB.adminBg || '';
+    document.getElementById('logoUrlInput').value = DB.logo || '';
+    document.getElementById('quotesEditor').value = DB.quotes ? DB.quotes.join('\n') : '';
+    document.getElementById('footerPaybill').value = DB.footer?.paybill || '';
+    document.getElementById('footerAccount').value = DB.footer?.account || '';
+    document.getElementById('footerMpesaPrompt').value = DB.footer?.mpesaPrompt || '';
+    document.getElementById('deliveryEditorText').value = DB.delivery ? DB.delivery.map(function(d) {
+        return d.name + ' | ' + d.phone + ' | ' + d.status;
+    }).join('\n') : '';
     
-    const sectionImagesContainer = document.getElementById('sectionImagesContainer');
-    if (sectionImagesContainer) {
-        const sections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
-        const customSections = DB.sections.filter(s => !sections.includes(s));
-        const allSections = [...sections, ...customSections];
-        sectionImagesContainer.innerHTML = allSections.map(id => {
-            const names = {
+    var container = document.getElementById('sectionImagesContainer');
+    if (container) {
+        var sections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
+        var customSections = DB.sections.filter(function(s) { return sections.indexOf(s) === -1; });
+        var allSections = sections.concat(customSections);
+        container.innerHTML = allSections.map(function(id) {
+            var names = {
                 'goods-in': 'Goods In',
                 'in-house': 'In-House Stock',
                 'goods-out': 'Goods Out',
                 'reports': 'Reports',
                 'delivery': 'Delivery'
             };
-            const displayName = names[id] || id.replace('-', ' ').toUpperCase();
+            var displayName = names[id] || id.replace('-', ' ').toUpperCase();
             return `
                 <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:6px; padding:4px 0; border-bottom:1px solid #f0f2f5;">
                     <span style="font-weight:600; min-width:140px;">${displayName}:</span>
@@ -538,29 +774,120 @@ function loadAdminContent() {
     }
 }
 
-// ============================================
-// SAVE SINGLE SECTION IMAGE
-// ============================================
 function saveSingleSectionImage(sectionId) {
-    const input = document.getElementById('sectionImg_' + sectionId);
+    var input = document.getElementById('sectionImg_' + sectionId);
     if (!input) return;
-    const url = input.value.trim();
+    var url = input.value.trim();
     if (!DB.sectionImages) DB.sectionImages = {};
     DB.sectionImages[sectionId] = url;
-    saveToLocalStorage();
+    saveDB(DB);
     renderSectionBackgrounds();
     showMessage('adminMessage', 'success', '✅ Image for ' + sectionId.replace('-', ' ').toUpperCase() + ' updated!');
+}
+
+function saveLoginBg() {
+    var url = document.getElementById('loginBgInput').value.trim();
+    if (url) {
+        DB.loginBg = url;
+        saveDB(DB);
+        var bg = document.querySelector('.login-background');
+        if (bg) bg.style.backgroundImage = 'url(' + url + ')';
+        showMessage('adminMessage', 'success', '✅ Login background updated!');
+    }
+}
+
+function saveDashboardBg() {
+    var url = document.getElementById('dashboardBgInput').value.trim();
+    if (url) {
+        DB.dashboardBg = url;
+        saveDB(DB);
+        var wrapper = document.getElementById('dashboardBgWrapper');
+        if (wrapper) wrapper.style.backgroundImage = 'url(' + url + ')';
+        showMessage('adminMessage', 'success', '✅ Dashboard background updated!');
+    }
+}
+
+function saveAdminBg() {
+    var url = document.getElementById('adminBgInput').value.trim();
+    if (url) {
+        DB.adminBg = url;
+        saveDB(DB);
+        var banner = document.querySelector('.admin-banner');
+        if (banner) {
+            banner.style.backgroundImage = 'url(' + url + ')';
+            banner.style.backgroundSize = 'cover';
+            banner.style.backgroundPosition = 'center';
+        }
+        showMessage('adminMessage', 'success', '✅ Admin background updated!');
+    }
+}
+
+function saveLogo() {
+    var url = document.getElementById('logoUrlInput').value.trim();
+    if (url) {
+        DB.logo = url;
+        saveDB(DB);
+        document.querySelectorAll('.nav-logo, .logo-large').forEach(function(el) {
+            if (el) el.src = url;
+        });
+        showMessage('adminMessage', 'success', '✅ Logo updated!');
+    }
+}
+
+function saveQuotes() {
+    var text = document.getElementById('quotesEditor').value;
+    var lines = text.split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+    if (lines.length === 0) {
+        showMessage('adminMessage', 'error', '⚠️ Enter at least one quote');
+        return;
+    }
+    DB.quotes = lines;
+    saveDB(DB);
+    renderQuotes();
+    showMessage('adminMessage', 'success', '✅ Quotes updated!');
+}
+
+function saveDeliveryContacts() {
+    var text = document.getElementById('deliveryEditorText').value;
+    var lines = text.split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+    var contacts = lines.map(function(line) {
+        var parts = line.split('|').map(function(p) { return p.trim(); });
+        return { name: parts[0] || 'Unknown', phone: parts[1] || '+254 700 000 000', status: parts[2] || 'available' };
+    });
+    if (contacts.length === 0) {
+        showMessage('adminMessage', 'error', '⚠️ Enter at least one contact');
+        return;
+    }
+    DB.delivery = contacts;
+    saveDB(DB);
+    renderDelivery();
+    showMessage('adminMessage', 'success', '✅ Delivery contacts updated!');
+}
+
+function saveFooterOptions() {
+    var paybill = document.getElementById('footerPaybill').value.trim();
+    var account = document.getElementById('footerAccount').value.trim();
+    var mpesaPrompt = document.getElementById('footerMpesaPrompt').value.trim();
+
+    if (paybill) DB.footer.paybill = paybill;
+    if (account) DB.footer.account = account;
+    if (mpesaPrompt) DB.footer.mpesaPrompt = mpesaPrompt;
+
+    saveDB(DB);
+    updateFooter();
+    showMessage('adminMessage', 'success', '✅ Footer options updated!');
 }
 
 // ============================================
 // ADMIN: LOAD TRANSACTIONS
 // ============================================
 function loadAdminTransactions() {
-    const goodsInBody = document.getElementById('adminGoodsInBody');
+    DB = getDB();
+    var goodsInBody = document.getElementById('adminGoodsInBody');
     if (goodsInBody) {
         goodsInBody.innerHTML = '';
-        DB.goodsIn.slice().reverse().forEach(r => {
-            const tr = document.createElement('tr');
+        DB.goodsIn.slice().reverse().forEach(function(r) {
+            var tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${new Date(r.date).toLocaleDateString()}</td>
                 <td>${r.productName}</td>
@@ -577,17 +904,17 @@ function loadAdminTransactions() {
         }
     }
 
-    const goodsOutBody = document.getElementById('adminGoodsOutBody');
+    var goodsOutBody = document.getElementById('adminGoodsOutBody');
     if (goodsOutBody) {
         goodsOutBody.innerHTML = '';
-        DB.goodsOut.slice().reverse().forEach(r => {
-            const itemsStr = r.items.map(i => `${i.productName} x${i.quantity}`).join(', ');
-            const tr = document.createElement('tr');
+        DB.goodsOut.slice().reverse().forEach(function(r) {
+            var itemsStr = r.items.map(function(i) { return i.productName + ' x' + i.quantity; }).join(', ');
+            var tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${new Date(r.date).toLocaleDateString()}</td>
                 <td>${r.orderNumber}</td>
                 <td>${itemsStr}</td>
-                <td>${r.items.reduce((s, i) => s + i.quantity, 0)}</td>
+                <td>${r.items.reduce(function(s, i) { return s + i.quantity; }, 0)}</td>
                 <td>KES ${r.total.toLocaleString()}</td>
                 <td>${r.customer}</td>
                 <td>${r.staff}</td>
@@ -600,292 +927,8 @@ function loadAdminTransactions() {
     }
 }
 
-// ============================================
-// ADMIN: LOAD STATS
-// ============================================
-function loadAdminStats() {
-    document.getElementById('adminGoodsIn').textContent = DB.goodsIn.length;
-    document.getElementById('adminStock').textContent = DB.stock.reduce((s, i) => s + i.quantity, 0);
-    document.getElementById('adminSold').textContent = DB.goodsOut.length;
-    const revenue = DB.goodsOut.reduce((s, i) => s + i.total, 0);
-    document.getElementById('adminRevenue').textContent = 'KES ' + revenue.toLocaleString();
-    const cost = DB.goodsIn.reduce((s, i) => s + i.quantity * i.costPrice, 0);
-    document.getElementById('adminProfit').textContent = 'KES ' + (revenue - cost).toLocaleString();
-    document.getElementById('adminStaff').textContent = DB.staff.filter(s => s.role !== 'admin').length;
-}
-
-// ============================================
-// ADMIN FUNCTIONS
-// ============================================
-function loadAdmin() {
-    const password = prompt('Enter admin password:');
-    if (password === ADMIN_PASSWORD) {
-        document.getElementById('adminEmail').textContent = ADMIN_EMAIL;
-        if (DB.adminBg) {
-            const adminBanner = document.querySelector('.admin-banner');
-            if (adminBanner) {
-                adminBanner.style.backgroundImage = 'url(' + DB.adminBg + ')';
-                adminBanner.style.backgroundSize = 'cover';
-                adminBanner.style.backgroundPosition = 'center';
-                adminBanner.style.position = 'relative';
-                const content = adminBanner.querySelector('.admin-banner-content');
-                if (content) {
-                    if (!adminBanner.querySelector('.admin-banner-overlay')) {
-                        const overlayEl = document.createElement('div');
-                        overlayEl.className = 'admin-banner-overlay';
-                        overlayEl.style.cssText = 'position:absolute; inset:0; background:linear-gradient(135deg, rgba(10,14,26,0.85), rgba(15,52,96,0.7)); border-radius:16px; z-index:0;';
-                        adminBanner.insertBefore(overlayEl, content);
-                    }
-                }
-            }
-        }
-        loadAdminStats();
-        navigateAdmin('admin');
-    } else {
-        alert('❌ Invalid admin password!');
-        window.location.href = 'index.html';
-    }
-}
-
-// ============================================
-// ADMIN: STAFF CRUD
-// ============================================
-function adminAddStaff(event) {
-    event.preventDefault();
-    const email = document.getElementById('adminStaffEmail').value.trim();
-    const name = document.getElementById('adminStaffName').value.trim();
-    if (!email || !name) { showMessage('adminMessage', 'error', '⚠️ Fill all fields'); return; }
-    if (DB.staff.find(s => s.email.toLowerCase() === email.toLowerCase())) {
-        showMessage('adminMessage', 'error', '⚠️ Staff already exists');
-        return;
-    }
-    DB.staff.push({ email, name, role: 'staff' });
-    saveToLocalStorage();
-    showMessage('adminMessage', 'success', '✅ Staff added successfully!');
-    document.getElementById('adminStaffForm').reset();
-    document.getElementById('adminStaffForm').style.display = 'none';
-    loadAdminStaff();
-    loadAdminStats();
-}
-
-function adminRemoveStaff(email) {
-    if (!confirm('Remove ' + email + '?')) return;
-    DB.staff = DB.staff.filter(s => s.email !== email);
-    saveToLocalStorage();
-    loadAdminStaff();
-    loadAdminStats();
-    showMessage('adminMessage', 'success', '✅ Staff removed successfully!');
-}
-
-// ============================================
-// ADMIN: PRODUCTS CRUD
-// ============================================
-function adminAddProduct(event) {
-    event.preventDefault();
-    const name = document.getElementById('adminProductName').value.trim();
-    const category = document.getElementById('adminProductCategory').value.trim();
-    const brand = document.getElementById('adminProductBrand').value.trim();
-    const size = document.getElementById('adminProductSize').value.trim();
-    const price = parseFloat(document.getElementById('adminProductPrice').value);
-    const image = document.getElementById('adminProductImage').value.trim();
-
-    if (!name || !category || !price) {
-        showMessage('adminMessage', 'error', '⚠️ Fill in name, category and price');
-        return;
-    }
-
-    const newProduct = {
-        id: 'P' + String(DB.products.length + 1).padStart(3, '0'),
-        name: name,
-        category: category,
-        brand: brand || '',
-        size: size || '',
-        price: price,
-        image: image || ''
-    };
-    DB.products.push(newProduct);
-    saveToLocalStorage();
-    showMessage('adminMessage', 'success', '✅ Product added successfully!');
-    document.getElementById('adminProductForm').reset();
-    document.getElementById('adminProductForm').style.display = 'none';
-    loadAdminProducts();
-    populateProductSelect();
-}
-
-function editProduct(productId) {
-    const product = DB.products.find(p => p.id === productId);
-    if (!product) return;
-
-    const newName = prompt('Product Name:', product.name);
-    if (newName === null) return;
-    const newCategory = prompt('Category:', product.category);
-    if (newCategory === null) return;
-    const newPrice = prompt('Price (KES):', product.price);
-    if (newPrice === null) return;
-
-    product.name = newName.trim() || product.name;
-    product.category = newCategory.trim() || product.category;
-    product.price = parseFloat(newPrice) || product.price;
-
-    saveToLocalStorage();
-    loadAdminProducts();
-    populateProductSelect();
-    showMessage('adminMessage', 'success', '✅ Product updated successfully!');
-}
-
-function adminRemoveProduct(productId) {
-    if (!confirm('Remove this product?')) return;
-    DB.products = DB.products.filter(p => p.id !== productId);
-    saveToLocalStorage();
-    loadAdminProducts();
-    populateProductSelect();
-    showMessage('adminMessage', 'success', '✅ Product removed successfully!');
-}
-
-// ============================================
-// ADMIN: SECTIONS CRUD
-// ============================================
-function adminAddSection(event) {
-    event.preventDefault();
-    const name = document.getElementById('adminSectionName').value.trim().toLowerCase().replace(/\s+/g, '-');
-    if (!name) { showMessage('adminMessage', 'error', '⚠️ Enter a section name'); return; }
-    if (DB.sections.includes(name)) { showMessage('adminMessage', 'error', '⚠️ Section already exists'); return; }
-    DB.sections.push(name);
-    if (!DB.customSections) DB.customSections = {};
-    DB.customSections[name] = { 
-        title: name.replace('-', ' ').toUpperCase(), 
-        content: 'Welcome to ' + name.replace('-', ' ').toUpperCase() + '! Add your content here.' 
-    };
-    if (!DB.sectionImages) DB.sectionImages = {};
-    DB.sectionImages[name] = 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800&q=80';
-    saveToLocalStorage();
-    showMessage('adminMessage', 'success', '✅ Section added! You can now edit its content and image.');
-    document.getElementById('adminSectionForm').reset();
-    document.getElementById('adminSectionForm').style.display = 'none';
-    loadAdminSections();
-    renderSections();
-    renderDynamicSections();
-    renderSectionBackgrounds();
-}
-
-function adminRemoveSection(name) {
-    if (!confirm('Remove section "' + name + '"?')) return;
-    DB.sections = DB.sections.filter(s => s !== name);
-    if (DB.customSections) {
-        delete DB.customSections[name];
-    }
-    if (DB.sectionImages) {
-        delete DB.sectionImages[name];
-    }
-    saveToLocalStorage();
-    loadAdminSections();
-    renderSections();
-    renderDynamicSections();
-    renderSectionBackgrounds();
-    showMessage('adminMessage', 'success', '✅ Section removed!');
-}
-
-// ============================================
-// ADMIN: CONTENT CONTROL
-// ============================================
-function saveLoginBg() {
-    const url = document.getElementById('loginBgInput').value.trim();
-    if (url) {
-        DB.loginBg = url;
-        saveToLocalStorage();
-        const bg = document.querySelector('.login-background');
-        if (bg) bg.style.backgroundImage = 'url(' + url + ')';
-        showMessage('adminMessage', 'success', '✅ Login background updated!');
-    }
-}
-
-function saveDashboardBg() {
-    const url = document.getElementById('dashboardBgInput').value.trim();
-    if (url) {
-        DB.dashboardBg = url;
-        saveToLocalStorage();
-        const wrapper = document.getElementById('dashboardBgWrapper');
-        if (wrapper) wrapper.style.backgroundImage = 'url(' + url + ')';
-        showMessage('adminMessage', 'success', '✅ Dashboard background updated!');
-    }
-}
-
-function saveAdminBg() {
-    const url = document.getElementById('adminBgInput').value.trim();
-    if (url) {
-        DB.adminBg = url;
-        saveToLocalStorage();
-        const adminBanner = document.querySelector('.admin-banner');
-        if (adminBanner) {
-            adminBanner.style.backgroundImage = 'url(' + url + ')';
-            adminBanner.style.backgroundSize = 'cover';
-            adminBanner.style.backgroundPosition = 'center';
-        }
-        showMessage('adminMessage', 'success', '✅ Admin background updated!');
-    }
-}
-
-function saveLogo() {
-    const url = document.getElementById('logoUrlInput').value.trim();
-    if (url) {
-        DB.logo = url;
-        saveToLocalStorage();
-        document.querySelectorAll('.nav-logo, .logo-large').forEach(el => {
-            if (el) el.src = url;
-        });
-        showMessage('adminMessage', 'success', '✅ Logo updated!');
-    }
-}
-
-function saveQuotes() {
-    const text = document.getElementById('quotesEditor').value;
-    const lines = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-    if (lines.length === 0) {
-        showMessage('adminMessage', 'error', '⚠️ Enter at least one quote');
-        return;
-    }
-    DB.quotes = lines;
-    saveToLocalStorage();
-    renderQuotes();
-    showMessage('adminMessage', 'success', '✅ Quotes updated!');
-}
-
-function saveDeliveryContacts() {
-    const text = document.getElementById('deliveryEditorText').value;
-    const lines = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-    const contacts = lines.map(line => {
-        const parts = line.split('|').map(p => p.trim());
-        return { name: parts[0] || 'Unknown', phone: parts[1] || '+254 700 000 000', status: parts[2] || 'available' };
-    });
-    if (contacts.length === 0) {
-        showMessage('adminMessage', 'error', '⚠️ Enter at least one contact');
-        return;
-    }
-    DB.delivery = contacts;
-    saveToLocalStorage();
-    renderDelivery();
-    showMessage('adminMessage', 'success', '✅ Delivery contacts updated!');
-}
-
-function saveFooterOptions() {
-    const paybill = document.getElementById('footerPaybill').value.trim();
-    const account = document.getElementById('footerAccount').value.trim();
-    const mpesaPrompt = document.getElementById('footerMpesaPrompt').value.trim();
-
-    if (paybill) DB.footer.paybill = paybill;
-    if (account) DB.footer.account = account;
-    if (mpesaPrompt) DB.footer.mpesaPrompt = mpesaPrompt;
-
-    saveToLocalStorage();
-    updateFooter();
-    showMessage('adminMessage', 'success', '✅ Footer options updated!');
-}
-
-// ============================================
-// ADMIN: TRANSACTIONS TABS
-// ============================================
 function showAdminTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
     if (tab === 'goods-in') {
         document.querySelector('.tab-btn:first-child').classList.add('active');
         document.getElementById('adminGoodsInTable').style.display = 'block';
@@ -899,23 +942,160 @@ function showAdminTab(tab) {
 }
 
 // ============================================
+// ADMIN: LOAD STATS
+// ============================================
+function loadAdminStats() {
+    DB = getDB();
+    document.getElementById('adminGoodsIn').textContent = DB.goodsIn.length;
+    document.getElementById('adminStock').textContent = DB.stock.reduce(function(s, i) { return s + i.quantity; }, 0);
+    document.getElementById('adminSold').textContent = DB.goodsOut.length;
+    var revenue = DB.goodsOut.reduce(function(s, i) { return s + i.total; }, 0);
+    document.getElementById('adminRevenue').textContent = 'KES ' + revenue.toLocaleString();
+    var cost = DB.goodsIn.reduce(function(s, i) { return s + i.quantity * i.costPrice; }, 0);
+    document.getElementById('adminProfit').textContent = 'KES ' + (revenue - cost).toLocaleString();
+    document.getElementById('adminStaff').textContent = DB.staff.filter(function(s) { return s.role !== 'admin'; }).length;
+}
+
+// ============================================
+// ADMIN FUNCTIONS
+// ============================================
+function loadAdmin() {
+    // Check session
+    var session = localStorage.getItem('spacewiseSession');
+    if (session) {
+        try {
+            var user = JSON.parse(session);
+            if (user && user.role === 'admin') {
+                currentUser = user;
+                // Reload DB
+                DB = getDB();
+                loadAdminData();
+                return;
+            }
+        } catch (e) {}
+    }
+    
+    // If not logged in, redirect to login
+    window.location.href = 'index.html';
+}
+
+function loadAdminData() {
+    DB = getDB();
+    if (DB.adminBg) {
+        var banner = document.querySelector('.admin-banner');
+        if (banner) {
+            banner.style.backgroundImage = 'url(' + DB.adminBg + ')';
+            banner.style.backgroundSize = 'cover';
+            banner.style.backgroundPosition = 'center';
+        }
+    }
+    loadAdminStats();
+    loadAdminStaff();
+    loadAdminProducts();
+    loadAdminSections();
+    loadAdminContent();
+    loadAdminTransactions();
+    navigateAdmin('admin');
+}
+
+// ============================================
+// RESET FUNCTIONS
+// ============================================
+function resetAllData() {
+    if (!confirm('⚠️ This will DELETE ALL data. Are you sure?')) return;
+    if (!confirm('⚠️ FINAL WARNING: This cannot be undone! Continue?')) return;
+    try {
+        var admin = DB.staff.find(function(s) { return s.role === 'admin'; });
+        DB.userData = {};
+        DB.goodsIn = [];
+        DB.stock = [];
+        DB.goodsOut = [];
+        DB.cart = [];
+        DB.orderCounter = 1;
+        DB.products = [...PRODUCTS];
+        DB.staff = admin ? [admin] : [{ email: 'admin@spacewise.com', name: 'Admin', role: 'admin', password: 'admin123' }];
+        saveDB(DB);
+        showMessage('adminMessage', 'success', '✅ All data reset successfully! Refreshing...');
+        setTimeout(function() { location.reload(); }, 1500);
+    } catch (e) {
+        showMessage('adminMessage', 'error', '❌ Reset failed: ' + e.message);
+    }
+}
+
+function resetStockOnly() {
+    if (!confirm('⚠️ This will DELETE all current stock. Continue?')) return;
+    try {
+        DB.stock = [];
+        DB.cart = [];
+        saveDB(DB);
+        showMessage('adminMessage', 'success', '✅ Stock reset successfully! Refreshing...');
+        setTimeout(function() { location.reload(); }, 1500);
+    } catch (e) {
+        showMessage('adminMessage', 'error', '❌ Reset failed: ' + e.message);
+    }
+}
+
+function resetTransactionsOnly() {
+    if (!confirm('⚠️ This will DELETE all Goods In and Goods Out records. Continue?')) return;
+    try {
+        DB.goodsIn = [];
+        DB.goodsOut = [];
+        DB.orderCounter = 1;
+        saveDB(DB);
+        showMessage('adminMessage', 'success', '✅ Transactions reset successfully! Refreshing...');
+        setTimeout(function() { location.reload(); }, 1500);
+    } catch (e) {
+        showMessage('adminMessage', 'error', '❌ Reset failed: ' + e.message);
+    }
+}
+
+function restoreDefaultProducts() {
+    if (!confirm('⚠️ This will restore default products. Custom products will be lost. Continue?')) return;
+    try {
+        DB.products = [...PRODUCTS];
+        saveDB(DB);
+        showMessage('adminMessage', 'success', '✅ Default products restored! Refreshing...');
+        setTimeout(function() { location.reload(); }, 1500);
+    } catch (e) {
+        showMessage('adminMessage', 'error', '❌ Restore failed: ' + e.message);
+    }
+}
+
+function resetAllUsersData() {
+    if (!confirm('⚠️ This will DELETE all user data. Continue?')) return;
+    try {
+        DB.userData = {};
+        saveDB(DB);
+        showMessage('adminMessage', 'success', '✅ All users data reset! Refreshing...');
+        setTimeout(function() { location.reload(); }, 1500);
+    } catch (e) {
+        showMessage('adminMessage', 'error', '❌ Reset failed: ' + e.message);
+    }
+}
+
+// ============================================
 // DASHBOARD FUNCTIONS
 // ============================================
 function loadDashboard() {
-    const email = getEmailFromUrl();
+    var email = getEmailFromUrl();
     if (!email) { window.location.href = 'index.html'; return; }
-    const staff = DB.staff.find(s => s.email.toLowerCase() === email.toLowerCase());
+    
+    DB = getDB();
+    var staff = DB.staff.find(function(s) {
+        return s.email.toLowerCase() === email.toLowerCase() && s.role !== 'admin';
+    });
     if (!staff) { window.location.href = 'index.html'; return; }
+    
     currentUser = staff;
     document.getElementById('userEmail').textContent = email;
     document.getElementById('userName').textContent = staff.name || 'Staff';
 
     if (DB.dashboardBg) {
-        const wrapper = document.getElementById('dashboardBgWrapper');
+        var wrapper = document.getElementById('dashboardBgWrapper');
         if (wrapper) wrapper.style.backgroundImage = 'url(' + DB.dashboardBg + ')';
     }
     if (DB.logo) {
-        document.querySelectorAll('.nav-logo, .logo-large').forEach(el => {
+        document.querySelectorAll('.nav-logo, .logo-large').forEach(function(el) {
             if (el) el.src = DB.logo;
         });
     }
@@ -937,35 +1117,44 @@ function loadDashboard() {
 }
 
 // ============================================
-// RENDER DYNAMIC SECTIONS (CUSTOM SECTIONS)
+// RENDER SECTION BACKGROUNDS
+// ============================================
+function renderSectionBackgrounds() {
+    var sections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
+    sections.forEach(function(id) {
+        var wrapper = document.querySelector('#section-' + id + ' .section-bg');
+        if (wrapper && DB.sectionImages && DB.sectionImages[id]) {
+            wrapper.style.backgroundImage = 'url(' + DB.sectionImages[id] + ')';
+            wrapper.style.opacity = '0.08';
+        }
+    });
+    if (DB.customSections) {
+        Object.keys(DB.customSections).forEach(function(id) {
+            var wrapper = document.querySelector('#section-' + id + ' .section-bg');
+            if (wrapper && DB.sectionImages && DB.sectionImages[id]) {
+                wrapper.style.backgroundImage = 'url(' + DB.sectionImages[id] + ')';
+                wrapper.style.opacity = '0.08';
+            }
+        });
+    }
+}
+
+// ============================================
+// RENDER DYNAMIC SECTIONS
 // ============================================
 function renderDynamicSections() {
-    const container = document.getElementById('dynamicSectionsContainer');
-    if (!container) {
-        const mainContent = document.getElementById('mainContent');
-        if (!mainContent) return;
-        const dashboardView = document.getElementById('view-dashboard');
-        if (!dashboardView) return;
-        const newContainer = document.createElement('div');
-        newContainer.id = 'dynamicSectionsContainer';
-        dashboardView.parentNode.insertBefore(newContainer, dashboardView.nextSibling);
-    }
-    
-    const container2 = document.getElementById('dynamicSectionsContainer');
-    if (!container2) return;
-    
-    const allSections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
-    const customSections = DB.sections.filter(s => !allSections.includes(s));
-    
+    var container = document.getElementById('dynamicSectionsContainer');
+    if (!container) return;
+    var allSections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
+    var customSections = DB.sections.filter(function(s) { return allSections.indexOf(s) === -1; });
     if (customSections.length === 0) {
-        container2.innerHTML = '';
+        container.innerHTML = '';
         return;
     }
-    
-    let html = '';
-    customSections.forEach(sectionId => {
-        const content = DB.customSections && DB.customSections[sectionId] ? DB.customSections[sectionId] : { title: sectionId.replace('-', ' ').toUpperCase(), content: 'Content not set.' };
-        const bgImage = DB.sectionImages && DB.sectionImages[sectionId] ? DB.sectionImages[sectionId] : 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800&q=80';
+    var html = '';
+    customSections.forEach(function(sectionId) {
+        var content = DB.customSections && DB.customSections[sectionId] ? DB.customSections[sectionId] : { title: sectionId.replace('-', ' ').toUpperCase(), content: 'Content not set.' };
+        var bgImage = DB.sectionImages && DB.sectionImages[sectionId] ? DB.sectionImages[sectionId] : 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800&q=80';
         html += `
             <div class="section-wrapper custom-section" id="section-${sectionId}">
                 <div class="section-bg" style="background-image: url('${bgImage}'); opacity:0.06;"></div>
@@ -981,11 +1170,11 @@ function renderDynamicSections() {
             </div>
         `;
     });
-    container2.innerHTML = html;
+    container.innerHTML = html;
 }
 
 function closeCustomSection(sectionId) {
-    const el = document.getElementById('section-' + sectionId);
+    var el = document.getElementById('section-' + sectionId);
     if (el) el.style.display = 'none';
 }
 
@@ -993,75 +1182,75 @@ function closeCustomSection(sectionId) {
 // RENDER DELIVERY
 // ============================================
 function renderDelivery() {
-    const container = document.getElementById('deliveryContacts');
+    var container = document.getElementById('deliveryContacts');
     if (!container) return;
-    const list = DB.delivery || [];
-    container.innerHTML = list.map(d => `
-        <div class="contact-item">
-            <div class="contact-avatar">🚚</div>
-            <div class="contact-details">
-                <div class="contact-name">${d.name}</div>
-                <div class="contact-phone"><i class="fas fa-phone"></i> ${d.phone}</div>
+    var list = DB.delivery || [];
+    container.innerHTML = list.map(function(d) {
+        return `
+            <div class="contact-item">
+                <div class="contact-avatar">🚚</div>
+                <div class="contact-details">
+                    <div class="contact-name">${d.name}</div>
+                    <div class="contact-phone"><i class="fas fa-phone"></i> ${d.phone}</div>
+                </div>
+                <span class="contact-badge ${d.status === 'available' ? 'available' : ''}">${d.status === 'available' ? 'Available' : 'Busy'}</span>
             </div>
-            <span class="contact-badge ${d.status === 'available' ? 'available' : ''}">${d.status === 'available' ? 'Available' : 'Busy'}</span>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // ============================================
 // RENDER SECTIONS
 // ============================================
 function renderSections() {
-    const sections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
-    const allSections = [...sections, ...DB.sections.filter(s => !sections.includes(s))];
+    var sections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
+    var allSections = sections.concat(DB.sections.filter(function(s) { return sections.indexOf(s) === -1; }));
 
-    const dropdownSection = document.querySelector('#leftDropdown .dropdown-section');
+    var dropdownSection = document.querySelector('#leftDropdown .dropdown-section');
     if (dropdownSection) {
-        const dashboardItem = dropdownSection.querySelector('.dropdown-item[data-section="dashboard"]');
-        dropdownSection.innerHTML = `
-            <div class="dropdown-title">Navigation</div>
-            ${dashboardItem ? dashboardItem.outerHTML : ''}
-            ${allSections.filter(s => s !== 'dashboard').map(s => {
-                const names = {
-                    'goods-in': 'Goods In',
-                    'in-house': 'In-House Stock',
-                    'goods-out': 'Goods Out',
-                    'reports': 'Reports',
-                    'delivery': 'Delivery'
-                };
-                return `<button class="dropdown-item" data-section="${s}" onclick="navigateTo('${s}')">
-                    <i class="fas fa-cube"></i> ${names[s] || s.replace('-', ' ').toUpperCase()}
-                </button>`;
-            }).join('')}
-        `;
+        var dashboardItem = dropdownSection.querySelector('.dropdown-item[data-section="dashboard"]');
+        var html = '<div class="dropdown-title">Navigation</div>';
+        if (dashboardItem) html += dashboardItem.outerHTML;
+        allSections.filter(function(s) { return s !== 'dashboard'; }).forEach(function(s) {
+            var names = {
+                'goods-in': 'Goods In',
+                'in-house': 'In-House Stock',
+                'goods-out': 'Goods Out',
+                'reports': 'Reports',
+                'delivery': 'Delivery'
+            };
+            html += '<button class="dropdown-item" data-section="' + s + '" onclick="navigateTo(\'' + s + '\')">';
+            html += '<i class="fas fa-cube"></i> ' + (names[s] || s.replace('-', ' ').toUpperCase());
+            html += '</button>';
+        });
+        dropdownSection.innerHTML = html;
     }
 
-    const grid = document.getElementById('dashboardGrid');
+    var grid = document.getElementById('dashboardGrid');
     if (grid) {
-        const dynamicContainer = document.getElementById('dynamicGridCards');
+        var dynamicContainer = document.getElementById('dynamicGridCards');
         if (dynamicContainer) {
-            const dynamicSections = DB.sections.filter(s => !sections.includes(s));
-            dynamicContainer.innerHTML = dynamicSections.map(s => `
-                <div class="grid-card" onclick="navigateTo('${s}')">
-                    <div class="grid-icon"><i class="fas fa-cube"></i></div>
-                    <h3>${s.replace('-', ' ').toUpperCase()}</h3>
-                    <p>Custom section</p>
-                    <span class="badge">✨</span>
-                </div>
-            `).join('');
+            var dynamicSections = DB.sections.filter(function(s) { return sections.indexOf(s) === -1; });
+            dynamicContainer.innerHTML = dynamicSections.map(function(s) {
+                return `
+                    <div class="grid-card" onclick="navigateTo('${s}')">
+                        <div class="grid-icon"><i class="fas fa-cube"></i></div>
+                        <h3>${s.replace('-', ' ').toUpperCase()}</h3>
+                        <p>Custom section</p>
+                        <span class="badge">✨</span>
+                    </div>
+                `;
+            }).join('');
         }
     }
 }
 
-// ============================================
-// UPDATE FOOTER
-// ============================================
 function updateFooter() {
-    const paybillText = document.getElementById('footerPaybillText');
+    var paybillText = document.getElementById('footerPaybillText');
     if (paybillText) paybillText.textContent = DB.footer?.paybill || '123456';
-    const accountText = document.getElementById('footerAccountText');
+    var accountText = document.getElementById('footerAccountText');
     if (accountText) accountText.textContent = DB.footer?.account || 'SPACEWISE';
-    const mpesaText = document.getElementById('mpesaPromptText');
+    var mpesaText = document.getElementById('mpesaPromptText');
     if (mpesaText) mpesaText.textContent = DB.footer?.mpesaPrompt || 'M-Pesa Coming Soon';
 }
 
@@ -1069,20 +1258,20 @@ function updateFooter() {
 // NAVIGATION (Dashboard)
 // ============================================
 function navigateTo(section) {
-    const sections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
-    const isCustom = !sections.includes(section);
+    var sections = ['goods-in', 'in-house', 'goods-out', 'reports', 'delivery'];
+    var isCustom = sections.indexOf(section) === -1;
     
-    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-    document.querySelectorAll('.section-wrapper.custom-section').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.section').forEach(function(s) { s.style.display = 'none'; });
+    document.querySelectorAll('.section-wrapper.custom-section').forEach(function(s) { s.style.display = 'none'; });
     
     if (isCustom) {
-        const target = document.getElementById('section-' + section);
+        var target = document.getElementById('section-' + section);
         if (target) {
             target.style.display = 'block';
             target.scrollIntoView({ behavior: 'smooth' });
         }
     } else {
-        const target = document.getElementById('section-' + section);
+        var target = document.getElementById('section-' + section);
         if (target) {
             target.style.display = 'block';
             target.scrollIntoView({ behavior: 'smooth' });
@@ -1091,58 +1280,61 @@ function navigateTo(section) {
         if (section === 'goods-in') { loadGoodsInList(); }
         if (section === 'goods-out') { loadGoodsOutList(); }
         if (section === 'reports') { updateReports(); }
+        if (section === 'cart') { loadCart(); }
     }
     
     currentView = section;
-    document.querySelectorAll('.dropdown-item').forEach(item => {
+    document.querySelectorAll('.dropdown-item').forEach(function(item) {
         item.classList.toggle('active', item.dataset.section === section);
     });
     closeLeftMenu();
 }
 
 function closeSection() {
-    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
-    document.querySelectorAll('.section-wrapper.custom-section').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.section').forEach(function(s) { s.style.display = 'none'; });
+    document.querySelectorAll('.section-wrapper.custom-section').forEach(function(s) { s.style.display = 'none'; });
 }
 
 // ============================================
-// GOODS IN (Dashboard)
+// GOODS IN FUNCTIONS
 // ============================================
 function populateProductSelect() {
-    const select = document.getElementById('productSelect');
+    var select = document.getElementById('productSelect');
     if (!select) return;
+    DB = getDB();
     select.innerHTML = '';
-    DB.products.forEach(p => {
-        const opt = document.createElement('option');
+    DB.products.forEach(function(p) {
+        var opt = document.createElement('option');
         opt.value = p.id;
-        opt.textContent = `${p.name} (${p.category}) - KES ${p.price}`;
+        opt.textContent = p.name + ' (' + p.category + ') - KES ' + p.price;
         opt.dataset.price = p.price;
         select.appendChild(opt);
     });
 }
 
 function filterProducts() {
-    const search = document.getElementById('productSearch').value.toLowerCase();
-    const select = document.getElementById('productSelect');
-    Array.from(select.options).forEach(opt => {
-        opt.style.display = opt.textContent.toLowerCase().includes(search) ? '' : 'none';
+    var search = document.getElementById('productSearch').value.toLowerCase();
+    var select = document.getElementById('productSelect');
+    Array.from(select.options).forEach(function(opt) {
+        opt.style.display = opt.textContent.toLowerCase().indexOf(search) !== -1 ? '' : 'none';
     });
 }
 
 function addGoodsIn(event) {
     event.preventDefault();
-    const productId = document.getElementById('productSelect').value;
-    const quantity = parseInt(document.getElementById('quantityIn').value);
-    const location = document.getElementById('location').value.trim();
-    const supplier = document.getElementById('supplier').value.trim() || 'Unknown';
-    const notes = document.getElementById('goodsInNotes').value.trim();
+    var productId = document.getElementById('productSelect').value;
+    var quantity = parseInt(document.getElementById('quantityIn').value);
+    var location = document.getElementById('location').value.trim();
+    var supplier = document.getElementById('supplier').value.trim() || 'Unknown';
+    var notes = document.getElementById('goodsInNotes').value.trim();
 
     if (!productId) { showMessage('dashboardMessage', 'error', '⚠️ Select a product'); return; }
-    const prod = DB.products.find(p => p.id === productId);
+    DB = getDB();
+    var prod = DB.products.find(function(p) { return p.id === productId; });
     if (!prod) { showMessage('dashboardMessage', 'error', '⚠️ Product not found'); return; }
     if (!quantity || !location) { showMessage('dashboardMessage', 'error', '⚠️ Quantity and location required'); return; }
 
-    const record = {
+    var record = {
         id: 'GI-' + Date.now().toString().slice(-6),
         productId: prod.id,
         productName: prod.name,
@@ -1157,8 +1349,8 @@ function addGoodsIn(event) {
     };
     DB.goodsIn.push(record);
 
-    const sellingPrice = Math.round(prod.price * 1.3);
-    const existingStock = DB.stock.find(s => s.productId === prod.id && s.location === location);
+    var sellingPrice = Math.round(prod.price * 1.3);
+    var existingStock = DB.stock.find(function(s) { return s.productId === prod.id && s.location === location; });
     if (existingStock) {
         existingStock.quantity += quantity;
         existingStock.supplier = supplier;
@@ -1178,10 +1370,9 @@ function addGoodsIn(event) {
         });
     }
 
-    saveToLocalStorage();
+    saveDB(DB);
     updateAllBadges();
     showGoodsAddedNotification('✅ Goods added successfully! 😁');
-    
     document.getElementById('goodsInForm').reset();
     loadGoodsInList();
     loadStockList();
@@ -1189,82 +1380,33 @@ function addGoodsIn(event) {
     checkLowStock();
 }
 
-// ============================================
-// GREEN NOTIFICATION
-// ============================================
 function showGoodsAddedNotification(message) {
-    const existing = document.querySelector('.goods-added-notification');
+    var existing = document.querySelector('.goods-added-notification');
     if (existing) existing.remove();
-    
-    const notification = document.createElement('div');
+    var notification = document.createElement('div');
     notification.className = 'goods-added-notification';
-    notification.innerHTML = `
-        <i class="fas fa-check-circle" style="color:#27ae60; font-size:18px;"></i>
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()" style="background:transparent; border:none; color:#27ae60; cursor:pointer; font-size:16px;">✕</button>
-    `;
-    notification.style.cssText = `
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        background: #e8f5e9;
-        color: #1a1a2e;
-        padding: 16px 24px;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(39, 174, 96, 0.25);
-        border: 2px solid #27ae60;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-weight: 600;
-        font-size: 15px;
-        z-index: 9999;
-        animation: slideUp 0.5s ease;
-        max-width: 400px;
-        font-family: 'Inter', sans-serif;
-    `;
-    
-    if (!document.getElementById('notificationStyles')) {
-        const style = document.createElement('style');
-        style.id = 'notificationStyles';
-        style.textContent = `
-            @keyframes slideUp {
-                from { opacity: 0; transform: translateY(30px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes slideDown {
-                from { opacity: 1; transform: translateY(0); }
-                to { opacity: 0; transform: translateY(30px); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
+    notification.innerHTML = '<i class="fas fa-check-circle" style="color:#27ae60; font-size:18px;"></i><span>' + message + '</span><button onclick="this.parentElement.remove()" style="background:transparent; border:none; color:#27ae60; cursor:pointer; font-size:16px;">✕</button>';
+    notification.style.cssText = 'position:fixed; bottom:30px; right:30px; background:#e8f5e9; color:#1a1a2e; padding:16px 24px; border-radius:12px; box-shadow:0 8px 32px rgba(39,174,96,0.25); border:2px solid #27ae60; display:flex; align-items:center; gap:12px; font-weight:600; font-size:15px; z-index:9999; animation:slideUp 0.5s ease; max-width:400px; font-family:"Inter",sans-serif;';
     document.body.appendChild(notification);
-    
-    setTimeout(() => {
+    setTimeout(function() {
         if (notification.parentElement) {
             notification.style.animation = 'slideDown 0.4s ease';
-            setTimeout(() => {
-                if (notification.parentElement) notification.remove();
-            }, 400);
+            setTimeout(function() { if (notification.parentElement) notification.remove(); }, 400);
         }
     }, 5000);
 }
 
-// ============================================
-// GOODS IN LIST
-// ============================================
 function loadGoodsInList() {
-    const container = document.getElementById('goodsInList');
+    var container = document.getElementById('goodsInList');
     if (!container) return;
+    DB = getDB();
     if (DB.goodsIn.length === 0) {
         container.innerHTML = '<div class="empty-state"><span class="empty-icon">📦</span><p>No goods recorded yet</p></div>';
         return;
     }
     container.innerHTML = '';
-    DB.goodsIn.slice().reverse().forEach(r => {
-        const div = document.createElement('div');
+    DB.goodsIn.slice().reverse().forEach(function(r) {
+        var div = document.createElement('div');
         div.className = 'transaction-item';
         div.innerHTML = `
             <div class="details">
@@ -1279,23 +1421,21 @@ function loadGoodsInList() {
 }
 
 // ============================================
-// STOCK (Dashboard)
+// STOCK FUNCTIONS
 // ============================================
 function loadStockList() {
-    const container = document.getElementById('stockList');
+    var container = document.getElementById('stockList');
     if (!container) return;
+    DB = getDB();
     if (DB.stock.length === 0) {
         container.innerHTML = '<div class="empty-state"><span class="empty-icon">🏠</span><p>No stock available</p></div>';
         return;
     }
     container.innerHTML = '';
-    DB.stock.forEach(item => {
-        const div = document.createElement('div');
+    DB.stock.forEach(function(item) {
+        var div = document.createElement('div');
         div.className = 'stock-item';
-        const imgHtml = item.image ?
-            `<img src="${item.image}" class="item-img" alt="${item.productName}" onerror="this.style.display='none'">` :
-            `<div class="item-img" style="display:flex;align-items:center;justify-content:center;background:#f0f2f5;font-size:24px;">📦</div>`;
-
+        var imgHtml = item.image ? '<img src="' + item.image + '" class="item-img" alt="' + item.productName + '" onerror="this.style.display=\'none\'">' : '<div class="item-img" style="display:flex;align-items:center;justify-content:center;background:#f0f2f5;font-size:24px;">📦</div>';
         div.innerHTML = `
             <div class="item-checkbox">
                 <input type="checkbox" class="stock-checkbox" data-stock-id="${item.id}">
@@ -1315,11 +1455,10 @@ function loadStockList() {
         `;
         container.appendChild(div);
     });
-
-    document.querySelectorAll('.stock-checkbox').forEach(cb => {
+    document.querySelectorAll('.stock-checkbox').forEach(function(cb) {
         cb.addEventListener('change', function() {
-            const parent = this.closest('.stock-item');
-            const qtyControl = parent.querySelector('.item-qty-control');
+            var parent = this.closest('.stock-item');
+            var qtyControl = parent.querySelector('.item-qty-control');
             if (this.checked) {
                 parent.classList.add('checked');
                 qtyControl.classList.add('show');
@@ -1334,160 +1473,110 @@ function loadStockList() {
 }
 
 function filterStock() {
-    const search = document.getElementById('stockSearch').value.toLowerCase().trim();
-    const items = document.querySelectorAll('.stock-item');
-    items.forEach(item => {
-        const name = item.querySelector('.name')?.textContent?.toLowerCase() || '';
-        item.style.display = (search === '' || name.startsWith(search)) ? '' : 'none';
+    var search = document.getElementById('stockSearch').value.toLowerCase().trim();
+    document.querySelectorAll('.stock-item').forEach(function(item) {
+        var name = item.querySelector('.name')?.textContent?.toLowerCase() || '';
+        item.style.display = (search === '' || name.indexOf(search) === 0) ? '' : 'none';
     });
 }
 
 function updateStockSummary() {
-    const totalItems = DB.stock.reduce((sum, i) => sum + i.quantity, 0);
-    const totalValue = DB.stock.reduce((sum, i) => sum + (i.quantity * i.costPrice), 0);
-    const categories = new Set(DB.stock.map(i => i.category));
+    DB = getDB();
+    var totalItems = DB.stock.reduce(function(sum, i) { return sum + i.quantity; }, 0);
+    var totalValue = DB.stock.reduce(function(sum, i) { return sum + (i.quantity * i.costPrice); }, 0);
+    var categories = new Set(DB.stock.map(function(i) { return i.category; }));
     document.getElementById('totalItems').textContent = totalItems;
     document.getElementById('totalValue').textContent = 'KES ' + totalValue.toLocaleString();
     document.getElementById('totalCategories').textContent = categories.size;
 }
 
 function checkLowStock() {
-    const lowStockItems = DB.stock.filter(i => i.quantity <= 3);
-    const alertDiv = document.getElementById('lowStockAlert');
-    const msgSpan = document.getElementById('lowStockMessage');
+    DB = getDB();
+    var lowStockItems = DB.stock.filter(function(i) { return i.quantity <= 3; });
+    var alertDiv = document.getElementById('lowStockAlert');
+    var msgSpan = document.getElementById('lowStockMessage');
     if (lowStockItems.length > 0) {
         alertDiv.style.display = 'flex';
-        msgSpan.textContent = 'Low stock: ' + lowStockItems.map(i => i.productName).join(', ');
+        msgSpan.textContent = 'Low stock: ' + lowStockItems.map(function(i) { return i.productName; }).join(', ');
     } else {
         alertDiv.style.display = 'none';
     }
 }
 
 // ============================================
-// ADD TO CART (Dashboard) - With + and - buttons
+// ADD TO CART FUNCTIONS
 // ============================================
 function addSingleToCart(stockId) {
-    const stockItem = DB.stock.find(s => s.id === stockId);
-    if (!stockItem) { 
-        showMessage('dashboardMessage', 'error', '⚠️ Item not found in stock'); 
-        return; 
-    }
-    
-    const parent = document.querySelector(`.stock-item[data-stock-id="${stockId}"]`);
-    const qtyInput = parent?.querySelector('.qty-input');
-    let qty = parseInt(qtyInput?.value || 1);
+    DB = getDB();
+    var stockItem = DB.stock.find(function(s) { return s.id === stockId; });
+    if (!stockItem) { showMessage('dashboardMessage', 'error', '⚠️ Item not found in stock'); return; }
+    var parent = document.querySelector('.stock-item[data-stock-id="' + stockId + '"]');
+    var qtyInput = parent?.querySelector('.qty-input');
+    var qty = parseInt(qtyInput?.value || 1);
     if (isNaN(qty) || qty < 1) qty = 1;
-    
-    if (qty > stockItem.quantity) { 
-        showMessage('dashboardMessage', 'error', '⚠️ Not enough stock. Available: ' + stockItem.quantity); 
-        return; 
-    }
+    if (qty > stockItem.quantity) { showMessage('dashboardMessage', 'error', '⚠️ Not enough stock. Available: ' + stockItem.quantity); return; }
 
-    const existing = DB.cart.find(c => c.stockId === stockId);
+    var existing = DB.cart.find(function(c) { return c.stockId === stockId; });
     if (existing) {
-        if (stockItem.quantity < qty) {
-            showMessage('dashboardMessage', 'error', '⚠️ Not enough stock. Available: ' + stockItem.quantity);
-            return;
-        }
+        if (stockItem.quantity < qty) { showMessage('dashboardMessage', 'error', '⚠️ Not enough stock. Available: ' + stockItem.quantity); return; }
         existing.quantity += qty;
     } else {
-        DB.cart.push({ 
-            stockId: stockId, 
-            productName: stockItem.productName, 
-            quantity: qty, 
-            price: stockItem.sellingPrice 
-        });
+        DB.cart.push({ stockId: stockId, productName: stockItem.productName, quantity: qty, price: stockItem.sellingPrice });
     }
-
     stockItem.quantity -= qty;
     if (stockItem.quantity < 0) stockItem.quantity = 0;
-
-    saveToLocalStorage();
+    saveDB(DB);
     updateAllBadges();
     loadCart();
     renderCartDropdown();
     loadStockList();
     updateStockSummary();
     checkLowStock();
-    
     if (parent) {
-        const cb = parent.querySelector('.stock-checkbox');
-        if (cb) { 
-            cb.checked = false;
-            parent.classList.remove('checked');
-            parent.querySelector('.item-qty-control')?.classList.remove('show'); 
-        }
+        var cb = parent.querySelector('.stock-checkbox');
+        if (cb) { cb.checked = false; parent.classList.remove('checked'); parent.querySelector('.item-qty-control')?.classList.remove('show'); }
     }
-    showMessage('dashboardMessage', 'success', `✅ Added ${qty} × ${stockItem.productName} to cart (${stockItem.quantity} left in stock)`);
+    showMessage('dashboardMessage', 'success', '✅ Added ' + qty + ' × ' + stockItem.productName + ' to cart (' + stockItem.quantity + ' left in stock)');
 }
 
 function addSelectedToCart() {
-    const checkboxes = document.querySelectorAll('.stock-checkbox:checked');
-    if (checkboxes.length === 0) { 
-        showMessage('dashboardMessage', 'error', '⚠️ Select at least one item'); 
-        return; 
-    }
-    
-    let added = 0;
-    let errors = [];
-    
-    checkboxes.forEach(cb => {
-        const stockId = cb.dataset.stockId;
-        const stockItem = DB.stock.find(s => s.id === stockId);
-        if (!stockItem) {
-            errors.push('Item not found');
-            return;
-        }
-        
-        const parent = cb.closest('.stock-item');
-        const qtyInput = parent?.querySelector('.qty-input');
-        let qty = parseInt(qtyInput?.value || 1);
+    var checkboxes = document.querySelectorAll('.stock-checkbox:checked');
+    if (checkboxes.length === 0) { showMessage('dashboardMessage', 'error', '⚠️ Select at least one item'); return; }
+    var added = 0;
+    var errors = [];
+    DB = getDB();
+    checkboxes.forEach(function(cb) {
+        var stockId = cb.dataset.stockId;
+        var stockItem = DB.stock.find(function(s) { return s.id === stockId; });
+        if (!stockItem) { errors.push('Item not found'); return; }
+        var parent = cb.closest('.stock-item');
+        var qtyInput = parent?.querySelector('.qty-input');
+        var qty = parseInt(qtyInput?.value || 1);
         if (isNaN(qty) || qty < 1) qty = 1;
-        
-        if (qty > stockItem.quantity) {
-            errors.push(`${stockItem.productName}: only ${stockItem.quantity} available`);
-            return;
-        }
-        
-        const existing = DB.cart.find(c => c.stockId === stockId);
+        if (qty > stockItem.quantity) { errors.push(stockItem.productName + ': only ' + stockItem.quantity + ' available'); return; }
+        var existing = DB.cart.find(function(c) { return c.stockId === stockId; });
         if (existing) {
-            if (stockItem.quantity < qty) {
-                errors.push(`${stockItem.productName}: only ${stockItem.quantity} available`);
-                return;
-            }
+            if (stockItem.quantity < qty) { errors.push(stockItem.productName + ': only ' + stockItem.quantity + ' available'); return; }
             existing.quantity += qty;
         } else {
-            DB.cart.push({ 
-                stockId: stockId, 
-                productName: stockItem.productName, 
-                quantity: qty, 
-                price: stockItem.sellingPrice 
-            });
+            DB.cart.push({ stockId: stockId, productName: stockItem.productName, quantity: qty, price: stockItem.sellingPrice });
         }
-        
         stockItem.quantity -= qty;
         if (stockItem.quantity < 0) stockItem.quantity = 0;
-        
         added++;
         cb.checked = false;
-        if (parent) { 
-            parent.classList.remove('checked');
-            parent.querySelector('.item-qty-control')?.classList.remove('show'); 
-        }
+        if (parent) { parent.classList.remove('checked'); parent.querySelector('.item-qty-control')?.classList.remove('show'); }
     });
-    
     if (added > 0) {
-        saveToLocalStorage();
+        saveDB(DB);
         updateAllBadges();
         loadCart();
         renderCartDropdown();
         loadStockList();
         updateStockSummary();
         checkLowStock();
-        let msg = `✅ ${added} item(s) added to cart`;
-        if (errors.length > 0) {
-            msg += ' ⚠️ ' + errors.join('; ');
-        }
+        var msg = '✅ ' + added + ' item(s) added to cart';
+        if (errors.length > 0) { msg += ' ⚠️ ' + errors.join('; '); }
         showMessage('dashboardMessage', 'success', msg);
     } else if (errors.length > 0) {
         showMessage('dashboardMessage', 'error', '⚠️ ' + errors.join('; '));
@@ -1497,28 +1586,29 @@ function addSelectedToCart() {
 }
 
 // ============================================
-// CART & CHECKOUT (Dashboard) - With + and - buttons
+// CART FUNCTIONS
 // ============================================
 function loadCart() {
-    const container = document.getElementById('cartItems');
+    var container = document.getElementById('cartItems');
     if (!container) return;
+    DB = getDB();
     if (DB.cart.length === 0) {
         container.innerHTML = '<div class="empty-state"><span class="empty-icon">🛒</span><p>Your cart is empty.</p></div>';
         document.getElementById('cartTotal').textContent = 'KES 0';
         return;
     }
-    let html = '';
-    let total = 0;
-    DB.cart.forEach((item, index) => {
-        const subtotal = item.price * item.quantity;
+    var html = '';
+    var total = 0;
+    DB.cart.forEach(function(item, index) {
+        var subtotal = item.price * item.quantity;
         total += subtotal;
         html += `
             <div class="cart-item">
                 <span class="item-name">${item.productName}</span>
                 <span class="item-qty">
-                    <button onclick="updateCartQty(${index}, ${item.quantity - 1})" style="background:var(--danger); color:white; border:none; border-radius:4px; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold;">−</button>
+                    <button onclick="updateCartQty(${index}, ${item.quantity - 1})" style="background:#e74c3c; color:white; border:none; border-radius:4px; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold;">−</button>
                     <span style="padding:0 12px; font-weight:600; font-size:16px; min-width:30px; text-align:center; display:inline-block;">${item.quantity}</span>
-                    <button onclick="updateCartQty(${index}, ${item.quantity + 1})" style="background:var(--success); color:white; border:none; border-radius:4px; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold;">+</button>
+                    <button onclick="updateCartQty(${index}, ${item.quantity + 1})" style="background:#27ae60; color:white; border:none; border-radius:4px; width:28px; height:28px; cursor:pointer; font-size:16px; font-weight:bold;">+</button>
                 </span>
                 <span class="item-price">KES ${subtotal.toLocaleString()}</span>
                 <button class="btn-remove-cart" onclick="removeFromCart(${index})"><i class="fas fa-trash"></i></button>
@@ -1531,63 +1621,45 @@ function loadCart() {
 }
 
 function updateCartQty(index, newQty) {
-    // If quantity is 0 or less, remove the item
-    if (newQty <= 0) {
-        removeFromCart(index);
-        return;
-    }
-    
-    const cartItem = DB.cart[index];
+    if (newQty <= 0) { removeFromCart(index); return; }
+    DB = getDB();
+    var cartItem = DB.cart[index];
     if (!cartItem) return;
-    
-    const stockItem = DB.stock.find(s => s.id === cartItem.stockId);
+    var stockItem = DB.stock.find(function(s) { return s.id === cartItem.stockId; });
     if (!stockItem) {
         DB.cart.splice(index, 1);
-        saveToLocalStorage();
+        saveDB(DB);
         loadCart();
         renderCartDropdown();
         showMessage('dashboardMessage', 'error', '⚠️ Item no longer in stock, removed from cart');
         return;
     }
-    
-    const oldQty = cartItem.quantity;
-    const diff = newQty - oldQty;
-    
+    var diff = newQty - cartItem.quantity;
     if (diff > 0) {
-        // Need more items - check if enough stock
-        if (stockItem.quantity < diff) {
-            showMessage('dashboardMessage', 'error', `⚠️ Not enough stock for ${cartItem.productName}. Available: ${stockItem.quantity}`);
-            return;
-        }
+        if (stockItem.quantity < diff) { showMessage('dashboardMessage', 'error', '⚠️ Not enough stock for ' + cartItem.productName + '. Available: ' + stockItem.quantity); return; }
         stockItem.quantity -= diff;
     } else if (diff < 0) {
-        // Returning items to stock
         stockItem.quantity += Math.abs(diff);
     }
-    
     cartItem.quantity = newQty;
-    saveToLocalStorage();
+    saveDB(DB);
     loadCart();
     renderCartDropdown();
     loadStockList();
     updateStockSummary();
     checkLowStock();
     updateAllBadges();
-    showMessage('dashboardMessage', 'success', `✅ Cart updated: ${cartItem.productName} x${newQty}`);
+    showMessage('dashboardMessage', 'success', '✅ Cart updated: ' + cartItem.productName + ' x' + newQty);
 }
 
 function removeFromCart(index) {
-    const cartItem = DB.cart[index];
+    DB = getDB();
+    var cartItem = DB.cart[index];
     if (!cartItem) return;
-    
-    const stockItem = DB.stock.find(s => s.id === cartItem.stockId);
-    if (stockItem) {
-        stockItem.quantity += cartItem.quantity;
-        saveToLocalStorage();
-    }
-    
+    var stockItem = DB.stock.find(function(s) { return s.id === cartItem.stockId; });
+    if (stockItem) { stockItem.quantity += cartItem.quantity; }
     DB.cart.splice(index, 1);
-    saveToLocalStorage();
+    saveDB(DB);
     loadCart();
     renderCartDropdown();
     loadStockList();
@@ -1598,10 +1670,8 @@ function removeFromCart(index) {
 }
 
 function openCustomerModal() {
-    if (DB.cart.length === 0) { 
-        showMessage('dashboardMessage', 'error', '⚠️ Cart is empty'); 
-        return; 
-    }
+    DB = getDB();
+    if (DB.cart.length === 0) { showMessage('dashboardMessage', 'error', '⚠️ Cart is empty'); return; }
     document.getElementById('customerModal').style.display = 'flex';
 }
 
@@ -1611,35 +1681,31 @@ function closeCustomerModal() {
 
 function processCheckout(event) {
     event.preventDefault();
-    const name = document.getElementById('customerName').value.trim();
-    const phone = document.getElementById('customerPhone').value.trim();
-    const email = document.getElementById('customerEmail').value.trim();
+    var name = document.getElementById('customerName').value.trim();
+    var phone = document.getElementById('customerPhone').value.trim();
+    var email = document.getElementById('customerEmail').value.trim();
 
     if (!name || !phone) {
         alert('⚠️ Please fill in customer name and phone');
         return;
     }
 
-    for (const item of DB.cart) {
-        const stockItem = DB.stock.find(s => s.id === item.stockId);
-        if (!stockItem) {
-            alert(`⚠️ Stock error for ${item.productName}. Please remove and re-add.`);
-            return;
-        }
-        if (stockItem.quantity < 0) {
-            stockItem.quantity = 0;
-            saveToLocalStorage();
-        }
+    DB = getDB();
+    for (var i = 0; i < DB.cart.length; i++) {
+        var item = DB.cart[i];
+        var stockItem = DB.stock.find(function(s) { return s.id === item.stockId; });
+        if (!stockItem) { alert('⚠️ Stock error for ' + item.productName + '. Please remove and re-add.'); return; }
+        if (stockItem.quantity < 0) { stockItem.quantity = 0; }
     }
 
-    const orderNumber = 'ORD-' + String(DB.orderCounter++).padStart(4, '0');
-    let total = 0;
-    const items = DB.cart.map(item => {
+    var orderNumber = 'ORD-' + String(DB.orderCounter++).padStart(4, '0');
+    var total = 0;
+    var items = DB.cart.map(function(item) {
         total += item.price * item.quantity;
         return { productName: item.productName, quantity: item.quantity, price: item.price };
     });
 
-    const record = {
+    var record = {
         id: 'GO-' + Date.now().toString().slice(-6),
         orderNumber: orderNumber,
         items: items,
@@ -1651,9 +1717,8 @@ function processCheckout(event) {
         staff: currentUser ? currentUser.name : 'Unknown'
     };
     DB.goodsOut.push(record);
-
     DB.cart = [];
-    saveToLocalStorage();
+    saveDB(DB);
     updateAllBadges();
     loadCart();
     loadGoodsOutList();
@@ -1661,26 +1726,26 @@ function processCheckout(event) {
     updateStockSummary();
     checkLowStock();
     closeCustomerModal();
-
     generateReceipt(orderNumber, items, total, name, phone, email);
-    showMessage('dashboardMessage', 'success', `✅ Sale complete! Order #${orderNumber}`);
+    showMessage('dashboardMessage', 'success', '✅ Sale complete! Order #' + orderNumber);
 }
 
 // ============================================
-// GOODS OUT (Dashboard)
+// GOODS OUT FUNCTIONS
 // ============================================
 function loadGoodsOutList() {
-    const container = document.getElementById('goodsOutList');
+    var container = document.getElementById('goodsOutList');
     if (!container) return;
+    DB = getDB();
     if (DB.goodsOut.length === 0) {
         container.innerHTML = '<div class="empty-state"><span class="empty-icon">🚚</span><p>No sales yet</p></div>';
         return;
     }
     container.innerHTML = '';
-    DB.goodsOut.slice().reverse().forEach(r => {
-        const div = document.createElement('div');
+    DB.goodsOut.slice().reverse().forEach(function(r) {
+        var div = document.createElement('div');
         div.className = 'transaction-item';
-        const itemsStr = r.items.map(i => `${i.productName} x${i.quantity}`).join(', ');
+        var itemsStr = r.items.map(function(i) { return i.productName + ' x' + i.quantity; }).join(', ');
         div.innerHTML = `
             <div class="details">
                 <div class="title">Order #${r.orderNumber}</div>
@@ -1694,18 +1759,18 @@ function loadGoodsOutList() {
 }
 
 // ============================================
-// REPORTS (Dashboard)
+// REPORTS FUNCTIONS
 // ============================================
 function updateReports() {
-    const grid = document.getElementById('reportsGrid');
+    var grid = document.getElementById('reportsGrid');
     if (!grid) return;
-    const totalGoodsIn = DB.goodsIn.reduce((sum, i) => sum + i.quantity, 0);
-    const totalGoodsOut = DB.goodsOut.reduce((sum, i) => sum + i.items.reduce((s, it) => s + it.quantity, 0), 0);
-    const currentStock = DB.stock.reduce((sum, i) => sum + i.quantity, 0);
-    const revenue = DB.goodsOut.reduce((sum, i) => sum + i.total, 0);
-    const cost = DB.goodsIn.reduce((sum, i) => sum + i.quantity * i.costPrice, 0);
-    const profit = revenue - cost;
-
+    DB = getDB();
+    var totalGoodsIn = DB.goodsIn.reduce(function(sum, i) { return sum + i.quantity; }, 0);
+    var totalGoodsOut = DB.goodsOut.reduce(function(sum, i) { return sum + i.items.reduce(function(s, it) { return s + it.quantity; }, 0); }, 0);
+    var currentStock = DB.stock.reduce(function(sum, i) { return sum + i.quantity; }, 0);
+    var revenue = DB.goodsOut.reduce(function(sum, i) { return sum + i.total; }, 0);
+    var cost = DB.goodsIn.reduce(function(sum, i) { return sum + i.quantity * i.costPrice; }, 0);
+    var profit = revenue - cost;
     grid.innerHTML = `
         <div class="report-card"><h4>📦 Goods In</h4><div class="report-number">${totalGoodsIn}</div></div>
         <div class="report-card"><h4>🚚 Sales</h4><div class="report-number">${totalGoodsOut}</div></div>
@@ -1717,25 +1782,25 @@ function updateReports() {
 }
 
 // ============================================
-// RECEIPT
+// RECEIPT FUNCTIONS
 // ============================================
 function generateReceipt(orderNumber, items, total, customer, phone, email) {
-    const receiptBody = document.getElementById('receiptBody');
+    var receiptBody = document.getElementById('receiptBody');
     if (!receiptBody) return;
-    let html = `
+    var html = `
         <div class="receipt-header">
             <h2>🚀 SPACEWISE ELECTRONICS</h2>
             <p style="font-weight:600;">Order #${orderNumber}</p>
             <p style="font-size:13px; color:#7f8c8d;">Date: ${new Date().toLocaleString()}</p>
             <p style="font-size:13px; color:#7f8c8d;">Customer: ${customer}</p>
             <p style="font-size:13px; color:#7f8c8d;">Phone: ${phone}</p>
-            ${email ? `<p style="font-size:13px; color:#7f8c8d;">Email: ${email}</p>` : ''}
+            ${email ? '<p style="font-size:13px; color:#7f8c8d;">Email: ' + email + '</p>' : ''}
             <p style="font-size:13px; color:#7f8c8d;">Staff: ${currentUser ? currentUser.name : 'Unknown'}</p>
         </div>
         <div style="margin:10px 0;">
     `;
-    items.forEach(item => {
-        html += `<div class="receipt-item"><span>${item.productName} x${item.quantity}</span><span>KES ${(item.price * item.quantity).toLocaleString()}</span></div>`;
+    items.forEach(function(item) {
+        html += '<div class="receipt-item"><span>' + item.productName + ' x' + item.quantity + '</span><span>KES ' + (item.price * item.quantity).toLocaleString() + '</span></div>';
     });
     html += `
         </div>
@@ -1749,15 +1814,9 @@ function generateReceipt(orderNumber, items, total, customer, phone, email) {
 function closeReceipt() { document.getElementById('receiptModal').style.display = 'none'; }
 
 function printReceipt() {
-    const content = document.getElementById('receiptBody');
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`<html><head><title>Receipt</title>
-        <style>body{font-family:'Inter',sans-serif;padding:20px;max-width:400px;margin:auto;}
-        .receipt-header{text-align:center;border-bottom:2px dashed #ccc;padding-bottom:12px;margin-bottom:12px;}
-        .receipt-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;}
-        .receipt-total{font-size:20px;font-weight:700;text-align:right;margin-top:12px;padding-top:12px;border-top:2px solid #333;color:#27ae60;}
-        .receipt-footer{text-align:center;margin-top:15px;font-size:12px;color:#7f8c8d;}
-    </style></head><body>`);
+    var content = document.getElementById('receiptBody');
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write('<html><head><title>Receipt</title><style>body{font-family:"Inter",sans-serif;padding:20px;max-width:400px;margin:auto;}.receipt-header{text-align:center;border-bottom:2px dashed #ccc;padding-bottom:12px;margin-bottom:12px;}.receipt-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;}.receipt-total{font-size:20px;font-weight:700;text-align:right;margin-top:12px;padding-top:12px;border-top:2px solid #333;color:#27ae60;}.receipt-footer{text-align:center;margin-top:15px;font-size:12px;color:#7f8c8d;}</style></head><body>');
     printWindow.document.write(content.innerHTML);
     printWindow.document.write('</body></html>');
     printWindow.document.close();
@@ -1765,21 +1824,14 @@ function printReceipt() {
 }
 
 function downloadReceipt() {
-    const content = document.getElementById('receiptBody');
-    const html = `
-    <html><head><title>Receipt</title>
-    <style>body{font-family:'Inter',sans-serif;padding:20px;max-width:400px;margin:auto;}
-    .receipt-header{text-align:center;border-bottom:2px dashed #ccc;padding-bottom:12px;margin-bottom:12px;}
-    .receipt-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;}
-    .receipt-total{font-size:20px;font-weight:700;text-align:right;margin-top:12px;padding-top:12px;border-top:2px solid #333;color:#27ae60;}
-    .receipt-footer{text-align:center;margin-top:15px;font-size:12px;color:#7f8c8d;}
-</style></head><body>`;
-    const fullHtml = html + content.innerHTML + '</body></html>';
-    const blob = new Blob([fullHtml], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    var content = document.getElementById('receiptBody');
+    var html = '<html><head><title>Receipt</title><style>body{font-family:"Inter",sans-serif;padding:20px;max-width:400px;margin:auto;}.receipt-header{text-align:center;border-bottom:2px dashed #ccc;padding-bottom:12px;margin-bottom:12px;}.receipt-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;}.receipt-total{font-size:20px;font-weight:700;text-align:right;margin-top:12px;padding-top:12px;border-top:2px solid #333;color:#27ae60;}.receipt-footer{text-align:center;margin-top:15px;font-size:12px;color:#7f8c8d;}</style></head><body>';
+    var fullHtml = html + content.innerHTML + '</body></html>';
+    var blob = new Blob([fullHtml], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
-    a.download = `Receipt_${Date.now()}.html`;
+    a.download = 'Receipt_' + Date.now() + '.html';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1787,53 +1839,64 @@ function downloadReceipt() {
 }
 
 // ============================================
-// BADGE FUNCTIONS - Shows Total Quantity
+// BADGE FUNCTIONS
 // ============================================
 function updateAllBadges() {
-    const el = (id) => document.getElementById(id);
-    
-    // Cart badge - TOTAL QUANTITY of all items in cart
-    const cartTotalQty = DB.cart.reduce((sum, item) => sum + item.quantity, 0);
-    
+    DB = getDB();
+    var cartTotalQty = DB.cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
+    var el = function(id) { return document.getElementById(id); };
     if (el('cartBadge')) el('cartBadge').textContent = cartTotalQty;
     if (el('cartCount')) el('cartCount').textContent = cartTotalQty;
     if (el('cartBadgeTop')) el('cartBadgeTop').textContent = cartTotalQty;
     if (el('navCartBadge')) el('navCartBadge').textContent = cartTotalQty;
     if (el('dashCartBadge')) el('dashCartBadge').textContent = cartTotalQty;
-    
-    // Other badges
     if (el('goodsInBadge')) el('goodsInBadge').textContent = DB.goodsIn.length;
-    if (el('stockBadge')) el('stockBadge').textContent = DB.stock.reduce((sum, i) => sum + i.quantity, 0);
+    if (el('stockBadge')) el('stockBadge').textContent = DB.stock.reduce(function(sum, i) { return sum + i.quantity; }, 0);
     if (el('goodsOutBadge')) el('goodsOutBadge').textContent = DB.goodsOut.length;
     if (el('goodsInCount')) el('goodsInCount').textContent = DB.goodsIn.length;
-    if (el('stockCount')) el('stockCount').textContent = DB.stock.reduce((sum, i) => sum + i.quantity, 0);
+    if (el('stockCount')) el('stockCount').textContent = DB.stock.reduce(function(sum, i) { return sum + i.quantity; }, 0);
     if (el('goodsOutCount')) el('goodsOutCount').textContent = DB.goodsOut.length;
     if (el('navGoodsInBadge')) el('navGoodsInBadge').textContent = DB.goodsIn.length;
-    if (el('navStockBadge')) el('navStockBadge').textContent = DB.stock.reduce((sum, i) => sum + i.quantity, 0);
+    if (el('navStockBadge')) el('navStockBadge').textContent = DB.stock.reduce(function(sum, i) { return sum + i.quantity; }, 0);
     if (el('navGoodsOutBadge')) el('navGoodsOutBadge').textContent = DB.goodsOut.length;
-}
-
-// Legacy function for compatibility
-function updateBadges() {
-    updateAllBadges();
 }
 
 // ============================================
 // PAGE INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    const path = window.location.pathname;
-    if (path.includes('dashboard.html')) {
+    // Initialize database
+    DB = initDB();
+    renderQuotes();
+    updateAllBadges();
+    
+    var path = window.location.pathname;
+    if (path.indexOf('dashboard.html') !== -1) {
         loadDashboard();
-    } else if (path.includes('admin.html')) {
+    } else if (path.indexOf('admin.html') !== -1) {
         loadAdmin();
     }
 });
 
 console.log('🚀 SPACEWISE ELECTRONICS v2.0 loaded successfully!');
-console.log('👑 Admin password: admin123');
-// Backup current data
-const backup = JSON.stringify(DB);
-localStorage.setItem('spacewiseBackup', backup);
-console.log('✅ Data backed up!');
-
+console.log('👑 Default admin password: admin123');
+console.log('💡 Staff login: email only (no password)');
+console.log('💡 Admin login: click "Admin Login" link, enter password');
+console.log('💡 If you forgot the password, reset it in admin panel');
+function saveFavicon() {
+    var url = document.getElementById('faviconInput').value.trim();
+    if (url) {
+        DB = getDB();
+        DB.favicon = url;
+        saveDB(DB);
+        
+        var link = document.querySelector("link[rel*='icon']");
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'shortcut icon';
+            document.getElementsByTagName('head')[0].appendChild(link);
+        }
+        link.href = url;
+        showMessage('adminMessage', 'success', '✅ Favicon updated!');
+    }
+}

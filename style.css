@@ -1046,3 +1046,34 @@ tr:hover { background: var(--bg-light); }
     .tab-btn { justify-content: center; }
     .modal-footer { flex-direction: column; }
 }
+/* ============================================
+   ADMIN LINK - Underline on Hover
+   ============================================ */
+.admin-link a {
+    color: var(--accent-dark);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+}
+
+.admin-link a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--accent-dark);
+    transition: width 0.3s ease;
+}
+
+.admin-link a:hover {
+    color: var(--accent);
+}
+
+.admin-link a:hover::after {
+    width: 100%;
+}

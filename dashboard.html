@@ -9,14 +9,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-    <!-- Motivational Rolling Banner -->
     <div class="announcement-bar">
         <div class="marquee-track" id="marqueeTrack"></div>
     </div>
 
-    <!-- Navbar -->
     <nav class="navbar">
-        <!-- LEFT DROPDOWN MENU (with logo next to it) -->
         <div class="nav-left">
             <div class="left-menu-wrapper" onmouseenter="openLeftMenu()" onmouseleave="closeLeftMenu()">
                 <button class="menu-toggle" id="leftMenuToggle"><i class="fas fa-bars"></i></button>
@@ -28,6 +25,7 @@
                             <button class="dropdown-item active" data-section="dashboard" onclick="navigateTo('dashboard')"><i class="fas fa-home"></i> Dashboard</button>
                             <button class="dropdown-item" data-section="goods-in" onclick="navigateTo('goods-in')"><i class="fas fa-boxes"></i> Goods In <span class="badge-nav" id="navGoodsInBadge">0</span></button>
                             <button class="dropdown-item" data-section="in-house" onclick="navigateTo('in-house')"><i class="fas fa-warehouse"></i> In-House Stock <span class="badge-nav" id="navStockBadge">0</span></button>
+                            <button class="dropdown-item" data-section="cart" onclick="navigateTo('cart')"><i class="fas fa-shopping-cart"></i> Cart <span class="badge-nav" id="navCartBadge">0</span></button>
                             <button class="dropdown-item" data-section="goods-out" onclick="navigateTo('goods-out')"><i class="fas fa-truck"></i> Goods Out <span class="badge-nav" id="navGoodsOutBadge">0</span></button>
                             <button class="dropdown-item" data-section="reports" onclick="navigateTo('reports')"><i class="fas fa-chart-bar"></i> Reports</button>
                             <button class="dropdown-item" data-section="delivery" onclick="navigateTo('delivery')"><i class="fas fa-phone-alt"></i> Delivery</button>
@@ -37,7 +35,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="nav-brand">
                 <img src="images/logo.png" alt="SPACEWISE" class="nav-logo"
                      onerror="this.style.display='none'; this.parentElement.querySelector('.logo-fallback-nav').style.display='inline';">
@@ -45,9 +42,7 @@
                 <span>SPACEWISE</span>
             </div>
         </div>
-
         <div class="nav-user">
-            <!-- CART DROPDOWN (below logout) -->
             <div class="cart-dropdown-wrapper" onmouseenter="openCartDropdown()" onmouseleave="closeCartDropdown()">
                 <button class="cart-toggle" onclick="toggleCartDropdown()">
                     <i class="fas fa-shopping-cart"></i>
@@ -62,7 +57,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="user-profile">
                 <i class="fas fa-user-circle"></i>
                 <span class="user-email" id="userEmail">staff@spacewise.com</span>
@@ -71,9 +65,7 @@
         </div>
     </nav>
 
-    <!-- MAIN CONTENT -->
     <div class="main-content" id="mainContent">
-        <!-- DASHBOARD VIEW -->
         <div id="view-dashboard">
             <div class="welcome-banner" id="dashboardBgWrapper">
                 <div class="welcome-text">
@@ -86,28 +78,26 @@
                     <div class="mini-stat"><span class="mini-stat-icon">🚚</span><div><span class="mini-stat-number" id="goodsOutCount">0</span><span class="mini-stat-label">Sold</span></div></div>
                 </div>
             </div>
-
             <div id="lowStockAlert" class="alert alert-danger" style="display:none;">
                 <i class="fas fa-exclamation-triangle"></i>
                 <span id="lowStockMessage">Some items are running low!</span>
             </div>
-
             <div id="dashboardMessage" class="message"></div>
-            <!-- Dynamic Sections Container (for custom sections) -->
-<div id="dynamicSectionsContainer"></div>
-
-            <!-- Dashboard Grid -->
             <div class="dashboard-grid" id="dashboardGrid">
                 <div class="grid-card" onclick="navigateTo('goods-in')"><div class="grid-icon"><i class="fas fa-boxes"></i></div><h3>Goods In</h3><p>Add new stock</p><span class="badge" id="goodsInBadge">0</span></div>
                 <div class="grid-card" onclick="navigateTo('in-house')"><div class="grid-icon"><i class="fas fa-warehouse"></i></div><h3>In-House Stock</h3><p>View inventory</p><span class="badge" id="stockBadge">0</span></div>
+                <div class="grid-card" onclick="navigateTo('cart')"><div class="grid-icon"><i class="fas fa-shopping-cart"></i></div><h3>Cart</h3><p>Sell items</p><span class="badge" id="cartBadge">0</span></div>
                 <div class="grid-card" onclick="navigateTo('goods-out')"><div class="grid-icon"><i class="fas fa-truck"></i></div><h3>Goods Out</h3><p>Sales history</p><span class="badge" id="goodsOutBadge">0</span></div>
                 <div class="grid-card" onclick="navigateTo('reports')"><div class="grid-icon"><i class="fas fa-chart-bar"></i></div><h3>Reports</h3><p>Analytics</p></div>
                 <div class="grid-card" onclick="navigateTo('delivery')"><div class="grid-icon"><i class="fas fa-phone-alt"></i></div><h3>Delivery</h3><p>Contact delivery</p></div>
                 <div id="dynamicGridCards"></div>
             </div>
+            <div id="dashboardEmptyState">
+                <img id="dashboardEmptyImage" src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800&q=80" alt="Dashboard" style="width:100%; max-height:300px; object-fit:cover; border-radius:12px; margin-top:10px;">
+                <p style="text-align:center; color:#7f8c8d; margin-top:8px; font-size:14px;">Select a section from the menu to get started</p>
+            </div>
         </div>
 
-        <!-- ====== SECTION: GOODS IN ====== -->
         <div class="section" id="section-goods-in" style="display:none;">
             <div class="section-header">
                 <h3><i class="fas fa-boxes"></i> Record Goods In</h3>
@@ -131,7 +121,6 @@
             <div class="transaction-list" id="goodsInList"></div>
         </div>
 
-        <!-- ====== SECTION: IN-HOUSE STOCK ====== -->
         <div class="section" id="section-in-house" style="display:none;">
             <div class="section-header">
                 <h3><i class="fas fa-warehouse"></i> In-House Stock</h3>
@@ -150,7 +139,20 @@
             <div class="stock-list" id="stockList"></div>
         </div>
 
-        <!-- ====== SECTION: GOODS OUT ====== -->
+        <div class="section" id="section-cart" style="display:none;">
+            <div class="section-header">
+                <h3><i class="fas fa-shopping-cart"></i> Your Cart</h3>
+                <button class="btn-close" onclick="closeSection()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="cartItems"></div>
+            <div class="cart-total">
+                <h4>Total: <span id="cartTotal">KES 0</span></h4>
+                <div class="cart-actions">
+                    <button class="btn-primary" onclick="openCustomerModal()"><i class="fas fa-credit-card"></i> Sell Now</button>
+                </div>
+            </div>
+        </div>
+
         <div class="section" id="section-goods-out" style="display:none;">
             <div class="section-header">
                 <h3><i class="fas fa-truck"></i> Sales History</h3>
@@ -159,7 +161,6 @@
             <div class="transaction-list" id="goodsOutList"></div>
         </div>
 
-        <!-- ====== SECTION: REPORTS ====== -->
         <div class="section" id="section-reports" style="display:none;">
             <div class="section-header">
                 <h3><i class="fas fa-chart-bar"></i> Reports</h3>
@@ -168,7 +169,6 @@
             <div class="reports-grid" id="reportsGrid"></div>
         </div>
 
-        <!-- ====== SECTION: DELIVERY ====== -->
         <div class="section" id="section-delivery" style="display:none;">
             <div class="section-header">
                 <h3><i class="fas fa-phone-alt"></i> Delivery Contacts</h3>
@@ -178,7 +178,8 @@
         </div>
     </div>
 
-    <!-- FOOTER -->
+    <div id="dynamicSectionsContainer"></div>
+
     <footer class="app-footer" id="appFooter">
         <div class="footer-grid">
             <div id="footerBrand">
@@ -205,7 +206,6 @@
         <div class="footer-bottom">&copy; 2025 SPACEWISE ELECTRONICS. All rights reserved.</div>
     </footer>
 
-    <!-- Customer Modal -->
     <div class="modal-overlay" id="customerModal">
         <div class="modal-content" style="max-width:420px;">
             <div class="modal-header">

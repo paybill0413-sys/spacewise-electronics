@@ -26,6 +26,8 @@
                             <button class="dropdown-item" data-section="sections" onclick="navigateAdmin('sections')"><i class="fas fa-layer-group"></i> Sections</button>
                             <button class="dropdown-item" data-section="content" onclick="navigateAdmin('content')"><i class="fas fa-paint-brush"></i> Content</button>
                             <button class="dropdown-item" data-section="transactions" onclick="navigateAdmin('transactions')"><i class="fas fa-history"></i> Transactions</button>
+                            <button class="dropdown-item" data-section="password" onclick="navigateAdmin('password')"><i class="fas fa-key"></i> Change Password</button>
+                            <button class="dropdown-item" data-section="reset" onclick="navigateAdmin('reset')"><i class="fas fa-trash-alt"></i> Reset</button>
                         </div>
                         <div class="dropdown-footer">ADMIN v2.0</div>
                     </div>
@@ -40,9 +42,13 @@
     </nav>
 
     <div class="container">
-        <!-- ===== ADMIN DASHBOARD VIEW ===== -->
         <div id="admin-view-admin">
-            <div class="admin-banner"><h1><i class="fas fa-crown"></i> Admin Dashboard</h1><p>Manage staff, products, content, and transactions</p></div>
+            <div class="admin-banner" id="adminBanner">
+                <div class="admin-banner-content">
+                    <h1><i class="fas fa-crown"></i> Admin Dashboard</h1>
+                    <p>Manage staff, products, content, and transactions</p>
+                </div>
+            </div>
             <div id="adminMessage" class="message"></div>
             <div class="stats-grid" id="adminStatsGrid">
                 <div class="stat-card"><span class="stat-icon">📦</span><div class="stat-number" id="adminGoodsIn">0</div><div class="stat-label">Goods In</div></div>
@@ -58,11 +64,11 @@
                 <button class="btn-primary" onclick="navigateAdmin('sections')"><i class="fas fa-layer-group"></i> Sections</button>
                 <button class="btn-primary" onclick="navigateAdmin('content')"><i class="fas fa-paint-brush"></i> Content</button>
                 <button class="btn-primary" onclick="navigateAdmin('transactions')"><i class="fas fa-history"></i> Transactions</button>
+                <button class="btn-primary" onclick="navigateAdmin('password')" style="background:#f39c12; color:white;"><i class="fas fa-key"></i> Change Password</button>
+                <button class="btn-danger" onclick="navigateAdmin('reset')" style="background:#e74c3c; color:white;"><i class="fas fa-trash-alt"></i> Reset</button>
             </div>
         </div>
-        
 
-        <!-- ===== STAFF MANAGEMENT VIEW ===== -->
         <div id="admin-view-staff" style="display:none;">
             <div class="admin-section">
                 <div class="section-head">
@@ -81,7 +87,6 @@
             </div>
         </div>
 
-        <!-- ===== PRODUCTS MANAGEMENT VIEW ===== -->
         <div id="admin-view-products" style="display:none;">
             <div class="admin-section">
                 <div class="section-head">
@@ -104,7 +109,6 @@
             </div>
         </div>
 
-        <!-- ===== SECTIONS MANAGEMENT VIEW ===== -->
         <div id="admin-view-sections" style="display:none;">
             <div class="admin-section">
                 <div class="section-head">
@@ -122,7 +126,6 @@
             </div>
         </div>
 
-        <!-- ===== CONTENT CONTROL VIEW ===== -->
         <div id="admin-view-content" style="display:none;">
             <div class="admin-section">
                 <div class="section-head"><h3><i class="fas fa-paint-brush"></i> Content Control</h3></div>
@@ -144,10 +147,35 @@
                 </div>
 
                 <div style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:6px;"><i class="fas fa-image"></i> Dashboard Empty Image</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input type="text" id="emptyImageInput" placeholder="Image URL" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+                        <button class="btn-primary" onclick="saveEmptyImage()" style="width:auto; padding:8px 16px;">Save</button>
+                        <button class="btn-danger" onclick="removeEmptyImage()" style="width:auto; padding:8px 16px; background:#e74c3c; color:white; border:none; border-radius:8px; cursor:pointer;">Remove</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:6px;"><i class="fas fa-image"></i> Admin Background</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input type="text" id="adminBgInput" placeholder="Image URL" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+                        <button class="btn-primary" onclick="saveAdminBg()" style="width:auto; padding:8px 16px;">Save</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
                     <h4 style="margin-bottom:6px;"><i class="fas fa-logo"></i> Logo URL</h4>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <input type="text" id="logoUrlInput" placeholder="Logo Image URL" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
                         <button class="btn-primary" onclick="saveLogo()" style="width:auto; padding:8px 16px;">Save</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:6px;"><i class="fas fa-globe"></i> Favicon URL</h4>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input type="text" id="faviconInput" placeholder="Favicon URL" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+                        <button class="btn-primary" onclick="saveFavicon()" style="width:auto; padding:8px 16px;">Save</button>
                     </div>
                 </div>
 
@@ -176,24 +204,66 @@
                         <button class="btn-primary" onclick="saveDeliveryContacts()" style="width:auto; padding:8px 16px;">Save</button>
                     </div>
                 </div>
+
+                <div style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:6px;"><i class="fas fa-images"></i> Section Background Images</h4>
+                    <p style="color:#7f8c8d; font-size:13px; margin-bottom:8px;">Edit images for each section (default and custom)</p>
+                    <div id="sectionImagesContainer"></div>
+                </div>
             </div>
         </div>
-        <!-- Admin Background -->
-<div style="margin-bottom:16px;">
-    <h4 style="margin-bottom:6px;"><i class="fas fa-image"></i> Admin Background</h4>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <input type="text" id="adminBgInput" placeholder="Image URL" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
-        <button class="btn-primary" onclick="saveAdminBg()" style="width:auto; padding:8px 16px;">Save</button>
-    </div>
-</div>
-<!-- Section Images Management -->
-<div style="margin-bottom:16px;">
-    <h4 style="margin-bottom:6px;"><i class="fas fa-images"></i> Section Background Images</h4>
-    <p style="color:#7f8c8d; font-size:13px; margin-bottom:8px;">Edit images for each section (default and custom)</p>
-    <div id="sectionImagesContainer"></div>
-</div>
 
-        <!-- ===== TRANSACTIONS VIEW ===== -->
+        <div id="admin-view-password" style="display:none;">
+            <div class="admin-section" style="border:2px solid #f39c12; border-radius:12px;">
+                <div class="section-head">
+                    <h3 style="color:#f39c12;"><i class="fas fa-key"></i> Change Admin Password</h3>
+                </div>
+                <p style="color:#7f8c8d; margin-bottom:16px;">Update your admin password. This will be required for future admin logins.</p>
+                <form id="changePasswordForm" onsubmit="changeAdminPassword(event)">
+                    <div class="form-group">
+                        <label><i class="fas fa-lock"></i> Current Password</label>
+                        <input type="password" id="currentPassword" placeholder="Enter current password" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-lock"></i> New Password</label>
+                        <input type="password" id="newAdminPassword" placeholder="Enter new password" required minlength="4">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-check-circle"></i> Confirm New Password</label>
+                        <input type="password" id="confirmAdminPassword" placeholder="Confirm new password" required>
+                    </div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Update Password</button>
+                </form>
+                <div id="passwordChangeMessage" class="message" style="margin-top:12px;"></div>
+            </div>
+        </div>
+
+        <div id="admin-view-reset" style="display:none;">
+            <div class="admin-section" style="background:#fff5f5; border:2px solid #e74c3c; border-radius:12px;">
+                <div class="section-head">
+                    <h3 style="color:#e74c3c;"><i class="fas fa-exclamation-triangle"></i> Danger Zone - Reset Options</h3>
+                </div>
+                <p style="color:#7f8c8d; margin-bottom:16px;">These actions cannot be undone. Proceed with caution.</p>
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <button onclick="resetAllData()" style="background:#e74c3c; color:white; padding:12px 24px; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
+                        <i class="fas fa-trash-alt"></i> Reset Everything
+                    </button>
+                    <button onclick="resetStockOnly()" style="background:#f39c12; color:white; padding:12px 24px; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
+                        <i class="fas fa-box"></i> Reset Stock Only
+                    </button>
+                    <button onclick="resetTransactionsOnly()" style="background:#3498db; color:white; padding:12px 24px; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
+                        <i class="fas fa-history"></i> Reset Transactions
+                    </button>
+                    <button onclick="restoreDefaultProducts()" style="background:#27ae60; color:white; padding:12px 24px; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
+                        <i class="fas fa-undo"></i> Restore Default Products
+                    </button>
+                    <button onclick="resetAllUsersData()" style="background:#8e44ad; color:white; padding:12px 24px; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
+                        <i class="fas fa-users"></i> Reset All Users Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div id="admin-view-transactions" style="display:none;">
             <div class="admin-section">
                 <h3><i class="fas fa-history"></i> All Transactions</h3>
@@ -236,6 +306,14 @@
         </div>
         <div class="footer-bottom">&copy; 2025 SPACEWISE ELECTRONICS. All rights reserved.</div>
     </footer>
+    <!-- This already exists in your admin.html -->
+<div style="margin-bottom:16px;">
+    <h4 style="margin-bottom:6px;"><i class="fas fa-globe"></i> Favicon URL</h4>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input type="text" id="faviconInput" placeholder="Favicon URL" style="flex:2; padding:8px 12px; border:2px solid #e8eaed; border-radius:8px;">
+        <button class="btn-primary" onclick="saveFavicon()" style="width:auto; padding:8px 16px;">Save</button>
+    </div>
+</div>
 
     <script src="script.js"></script>
 </body>
